@@ -163,7 +163,7 @@ export default function PagosPage() {
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <div>
             <h1 className="text-[22px] font-bold text-gray-900">Pagos</h1>
-            <p className="text-[11px] text-gray-400 mt-0.5">{payments.length} registros</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">{payments.length} registros · v5</p>
           </div>
           <div className="flex gap-2">
             <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.txt" onChange={handleFileChange} className="hidden" />
