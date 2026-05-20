@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --color-jafra:       #E91E8C;
+  --color-jafra-dark:  #C2185B;
+  --color-jafra-light: #FCE4EC;
+  --color-jafra-bg:    #EDF0FF;
+  --color-jafra-muted: #F9A8D4;
+}
+
+:root {
+  --background: #EDF0FF;
+  --foreground: #111111;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Card flotante */
+.card {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.10), 0 8px 24px rgba(99,102,241,0.10);
+}
+
+/* Sombra rosada para cards de acción JAFRA */
+.card-jafra {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(233, 30, 140, 0.10);
+}
+
+/* Gradient principal JAFRA */
+.gradient-jafra {
+  background: linear-gradient(135deg, #E91E8C 0%, #FF6BB0 100%);
+}
+
+/* Gradientes para icon chips */
+.chip-coral   { background: linear-gradient(135deg, #FF6B6B, #EE5A24); }
+.chip-green   { background: linear-gradient(135deg, #26de81, #20bf6b); }
+.chip-jafra   { background: linear-gradient(135deg, #E91E8C, #FF6BB0); }
+.chip-violet  { background: linear-gradient(135deg, #a55eea, #7048e8); }
+.chip-amber   { background: linear-gradient(135deg, #fd9644, #e67e22); }
+.chip-blue    { background: linear-gradient(135deg, #45aaf2, #2d98da); }
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Scroll suave */
+html { scroll-behavior: smooth; }
+
+/* Quitar scrollbar */
+.scroll-hide::-webkit-scrollbar { display: none; }
+.scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Animaciones */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.28s ease-out both; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.85); }
+}
+.pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
