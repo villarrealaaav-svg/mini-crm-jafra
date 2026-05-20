@@ -351,8 +351,13 @@ export default function PagosPage() {
       >
         {importRows && (
           <div className="space-y-3">
-            <p className="text-xs text-gray-500">Se encontraron <strong>{importRows.length}</strong> registros. Se crearán automáticamente las personas que no existan y sus recordatorios de cobro.</p>
-            <div className="overflow-x-auto rounded-xl max-h-64">
+            {/* Botón de importar ARRIBA — siempre visible sin scroll */}
+            <button onClick={confirmImport} disabled={importing}
+              style={{ width: '100%', padding: '14px', borderRadius: '14px', background: '#E91E8C', color: '#fff', fontSize: '15px', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+              {importing ? 'Importando...' : `✓ Confirmar importación de ${importRows.length} registros`}
+            </button>
+            <p className="text-xs text-gray-500">Se encontraron <strong>{importRows.length}</strong> registros. Se crearán las personas que no existan y sus recordatorios de cobro.</p>
+            <div className="overflow-x-auto rounded-xl max-h-48">
               <table className="min-w-full text-xs">
                 <thead className="bg-gray-50">
                   <tr>
