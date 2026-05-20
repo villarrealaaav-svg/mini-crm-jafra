@@ -160,6 +160,55 @@ export default function PagosPage() {
   const totalPagado = payments.filter(p => p.status === 'pagado').reduce((s, p) => s + (p.amount || 0), 0)
   const totalPendiente = payments.filter(p => p.status !== 'pagado').reduce((s, p) => s + (p.amount || 0), 0)
 
+  // Pantalla de confirmación de importación — reemplaza todo el contenido
+  if (importRows) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
+        {/* Header */}
+        <div style={{ padding: '48px 20px 16px', borderBottom: '1px solid #f3f4f6', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{ fontSize: '13px', color: '#9ca3af', margin: 0 }}>Vista previa</p>
+              <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#111827', margin: '2px 0 0' }}>
+                {importRows.length} registros listos
+              </h2>
+            </div>
+            <button onClick={() => setImportRows(null)}
+              style={{ padding: '8px 16px', borderRadius: '12px', border: '1px solid #e5e7eb', background: '#fff', fontSize: '13px', color: '#6b7280', cursor: 'pointer' }}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+        {/* Lista scrolleable */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px' }}>
+          {importRows.map((r, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f9fafb' }}>
+              <span style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>{r.name}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '13px', color: '#374151' }}>{r.amount ? `$${r.amount.toFixed(2)}` : '—'}</span>
+                <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '9999px', background: r.status === 'pagado' ? '#dcfce7' : '#fef3c7', color: r.status === 'pagado' ? '#15803d' : '#92400e' }}>
+                  {r.status === 'pagado' ? 'PAGADO' : 'PENDIENTE'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Botón fijo abajo */}
+        <div style={{ padding: '16px 20px 40px', borderTop: '1px solid #f3f4f6', flexShrink: 0 }}>
+          <button
+            onClick={confirmImport}
+            disabled={importing}
+            style={{ width: '100%', padding: '18px', borderRadius: '16px', background: importing ? '#f9a8d4' : '#E91E8C', color: '#fff', fontSize: '16px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
+          >
+            {importing ? 'Importando...' : `✓ Importar ${importRows.length} registros`}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-full pb-24">
       {/* Header */}
