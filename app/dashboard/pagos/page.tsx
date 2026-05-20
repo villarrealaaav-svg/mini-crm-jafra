@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { paymentsStore, personsStore } from '@/lib/store'
-import { parseImportFile, parseExcelBuffer, exportToCSV, type ImportRow } from '@/lib/csv'
+import { parseImportFile, parseExcelBuffer, exportToCSV } from '@/lib/csv'
+import type { ImportRow } from '@/lib/csv'
 import type { Payment, PaymentStatus, Person } from '@/types'
 import Modal from '@/components/Modal'
 
@@ -31,8 +32,6 @@ export default function PagosPage() {
   const [editing, setEditing] = useState<Payment | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [importRows, setImportRows] = useState<ImportRow[] | null>(null)
-  const [importing, setImporting] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   function load() {
@@ -103,26 +102,24 @@ export default function PagosPage() {
     if (isExcel) {
       reader.onload = ev => {
         const rows = parseExcelBuffer(ev.target?.result as ArrayBuffer)
-        setImportRows(rows)
+        doImport(rows)
       }
       reader.readAsArrayBuffer(file)
     } else {
       reader.onload = ev => {
         const rows = parseImportFile(ev.target?.result as string)
-        setImportRows(rows)
+        doImport(rows)
       }
       reader.readAsText(file, 'UTF-8')
     }
     e.target.value = ''
   }
 
-  function confirmImport() {
-    if (!importRows) return
-    setImporting(true)
+  function doImport(rows: ImportRow[]) {
+    if (!rows.length) return
     const existingPersons = personsStore.getAll()
     const personMap = new Map(existingPersons.map(p => [p.name.toLowerCase().trim(), p]))
-
-    for (const row of importRows) {
+    for (const row of rows) {
       if (!row.name) continue
       const key = row.name.toLowerCase().trim()
       let person = personMap.get(key)
@@ -147,8 +144,7 @@ export default function PagosPage() {
       })
     }
     load()
-    setImportRows(null)
-    setImporting(false)
+    alert(`✓ ${rows.length} registros importados correctamente`)
   }
 
   function formatDate(d: string) {
@@ -159,55 +155,6 @@ export default function PagosPage() {
   const totalAmount = payments.reduce((s, p) => s + (p.amount || 0), 0)
   const totalPagado = payments.filter(p => p.status === 'pagado').reduce((s, p) => s + (p.amount || 0), 0)
   const totalPendiente = payments.filter(p => p.status !== 'pagado').reduce((s, p) => s + (p.amount || 0), 0)
-
-  // Pantalla de confirmación de importación — reemplaza todo el contenido
-  if (importRows) {
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 9999, display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
-        <div style={{ padding: '48px 20px 16px', borderBottom: '1px solid #f3f4f6', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <p style={{ fontSize: '13px', color: '#9ca3af', margin: 0 }}>Vista previa</p>
-              <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#111827', margin: '2px 0 0' }}>
-                {importRows.length} registros listos
-              </h2>
-            </div>
-            <button onClick={() => setImportRows(null)}
-              style={{ padding: '8px 16px', borderRadius: '12px', border: '1px solid #e5e7eb', background: '#fff', fontSize: '13px', color: '#6b7280', cursor: 'pointer' }}>
-              Cancelar
-            </button>
-          </div>
-        </div>
-
-        {/* Lista scrolleable */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px' }}>
-          {importRows.map((r, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f9fafb' }}>
-              <span style={{ fontSize: '13px', color: '#374151', fontWeight: 500 }}>{r.name}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '13px', color: '#374151' }}>{r.amount ? `$${r.amount.toFixed(2)}` : '—'}</span>
-                <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '9999px', background: r.status === 'pagado' ? '#dcfce7' : '#fef3c7', color: r.status === 'pagado' ? '#15803d' : '#92400e' }}>
-                  {r.status === 'pagado' ? 'PAGADO' : 'PENDIENTE'}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Botón fijo abajo */}
-        <div style={{ padding: '16px 20px 40px', borderTop: '1px solid #f3f4f6', flexShrink: 0 }}>
-          <button
-            onClick={confirmImport}
-            disabled={importing}
-            style={{ width: '100%', padding: '18px', borderRadius: '16px', background: importing ? '#f9a8d4' : '#E91E8C', color: '#fff', fontSize: '16px', fontWeight: 700, border: 'none', cursor: 'pointer' }}
-          >
-            {importing ? 'Importando...' : `✓ Importar ${importRows.length} registros`}
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="max-w-full pb-24">
@@ -376,65 +323,6 @@ export default function PagosPage() {
             {editing ? 'Guardar cambios' : 'Agregar pago'}
           </button>
         </form>
-      </Modal>
-
-      {/* Modal importar */}
-      <Modal
-        open={!!importRows}
-        onClose={() => setImportRows(null)}
-        title={`Importar ${importRows?.length || 0} registros`}
-        footer={
-          importRows && (
-            <div className="flex gap-3">
-              <button onClick={() => setImportRows(null)}
-                className="flex-1 py-3 rounded-xl bg-gray-100 text-sm font-medium text-gray-600">
-                Cancelar
-              </button>
-              <button onClick={confirmImport} disabled={importing}
-                className="flex-1 py-3 rounded-xl bg-jafra text-white text-sm font-bold disabled:opacity-60">
-                {importing ? 'Importando...' : `✓ Importar ${importRows.length}`}
-              </button>
-            </div>
-          )
-        }
-      >
-        {importRows && (
-          <div className="space-y-3">
-            {/* Botón de importar ARRIBA — siempre visible sin scroll */}
-            <button onClick={confirmImport} disabled={importing}
-              style={{ width: '100%', padding: '14px', borderRadius: '14px', background: '#E91E8C', color: '#fff', fontSize: '15px', fontWeight: 700, border: 'none', cursor: 'pointer' }}>
-              {importing ? 'Importando...' : `✓ Confirmar importación de ${importRows.length} registros`}
-            </button>
-            <p className="text-xs text-gray-500">Se encontraron <strong>{importRows.length}</strong> registros. Se crearán las personas que no existan y sus recordatorios de cobro.</p>
-            <div className="overflow-x-auto rounded-xl max-h-48">
-              <table className="min-w-full text-xs">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-2 py-1.5 text-left text-gray-500">Nombre</th>
-                    <th className="px-2 py-1.5 text-right text-gray-500">Importe</th>
-                    <th className="px-2 py-1.5 text-center text-gray-500">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {importRows.slice(0, 10).map((r, i) => (
-                    <tr key={i}>
-                      <td className="px-2 py-1.5 text-gray-700 font-medium">{r.name}</td>
-                      <td className="px-2 py-1.5 text-right text-gray-600">{r.amount ? `$${r.amount.toFixed(2)}` : '—'}</td>
-                      <td className="px-2 py-1.5 text-center">
-                        <span className={`px-1.5 py-0.5 rounded-full text-xs ${r.status === 'pagado' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                          {r.status === 'pagado' ? 'PAGADO' : 'PENDIENTE'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                  {importRows.length > 10 && (
-                    <tr><td colSpan={3} className="px-2 py-1.5 text-center text-gray-400">... y {importRows.length - 10} más</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
       </Modal>
 
       {/* Modal eliminar */}
