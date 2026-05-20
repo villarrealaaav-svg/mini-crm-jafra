@@ -330,11 +330,29 @@ export default function PagosPage() {
       </Modal>
 
       {/* Modal importar */}
-      <Modal open={!!importRows} onClose={() => setImportRows(null)} title={`Importar ${importRows?.length || 0} registros`}>
+      <Modal
+        open={!!importRows}
+        onClose={() => setImportRows(null)}
+        title={`Importar ${importRows?.length || 0} registros`}
+        footer={
+          importRows && (
+            <div className="flex gap-3">
+              <button onClick={() => setImportRows(null)}
+                className="flex-1 py-3 rounded-xl bg-gray-100 text-sm font-medium text-gray-600">
+                Cancelar
+              </button>
+              <button onClick={confirmImport} disabled={importing}
+                className="flex-1 py-3 rounded-xl bg-jafra text-white text-sm font-bold disabled:opacity-60">
+                {importing ? 'Importando...' : `✓ Importar ${importRows.length}`}
+              </button>
+            </div>
+          )
+        }
+      >
         {importRows && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <p className="text-xs text-gray-500">Se encontraron <strong>{importRows.length}</strong> registros. Se crearán automáticamente las personas que no existan y sus recordatorios de cobro.</p>
-            <div className="overflow-x-auto rounded-xl  max-h-52">
+            <div className="overflow-x-auto rounded-xl max-h-64">
               <table className="min-w-full text-xs">
                 <thead className="bg-gray-50">
                   <tr>
@@ -360,13 +378,6 @@ export default function PagosPage() {
                   )}
                 </tbody>
               </table>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setImportRows(null)} className="flex-1 py-2.5 rounded-xl  text-sm font-medium text-gray-600">Cancelar</button>
-              <button onClick={confirmImport} disabled={importing}
-                className="flex-1 py-2.5 rounded-xl bg-jafra text-white text-sm font-semibold disabled:opacity-60">
-                {importing ? 'Importando...' : `Importar ${importRows.length}`}
-              </button>
             </div>
           </div>
         )}

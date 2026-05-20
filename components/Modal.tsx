@@ -7,9 +7,10 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: React.ReactNode
+  footer?: React.ReactNode  // botones siempre visibles, fuera del scroll
 }
 
-export default function Modal({ open, onClose, title, children }: ModalProps) {
+export default function Modal({ open, onClose, title, children, footer }: ModalProps) {
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -33,21 +34,22 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
     <div
       style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
     >
-      {/* Backdrop — sin blur para compatibilidad Opera Mini */}
+      {/* Backdrop */}
       <div
         style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 0 }}
         onClick={onClose}
       />
-      {/* Card — z-index explícito encima del backdrop */}
+      {/* Card */}
       <div
         style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '480px', background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 40px rgba(0,0,0,0.18)' }}
       >
         {/* Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '12px', paddingBottom: '4px', flexShrink: 0 }}>
           <div style={{ width: '40px', height: '4px', borderRadius: '9999px', background: '#e5e7eb' }} />
         </div>
+
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #f3f4f6' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid #f3f4f6', flexShrink: 0 }}>
           <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#1f2937', margin: 0 }}>{title}</h2>
           <button
             onClick={onClose}
@@ -56,10 +58,18 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
             ×
           </button>
         </div>
-        {/* Content */}
+
+        {/* Content — scrolleable */}
         <div style={{ overflowY: 'auto', flex: 1, padding: '16px 20px' }}>
           {children}
         </div>
+
+        {/* Footer fijo — siempre visible, fuera del scroll */}
+        {footer && (
+          <div style={{ padding: '12px 20px 24px', borderTop: '1px solid #f3f4f6', flexShrink: 0, background: '#fff' }}>
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   )
