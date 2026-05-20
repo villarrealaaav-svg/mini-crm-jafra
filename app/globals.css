@@ -52,8 +52,25 @@ body {
 /* Glassmorphism */
 .glass {
   background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+/* Opera Mini / navegadores legacy — fixed puede fallar, fallback sticky */
+@supports not (position: fixed) {
+  nav.fixed { position: sticky; bottom: 0; }
+}
+
+/* Prefijos webkit para transiciones y transforms */
+* {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.active\:scale-95:active,
+.active\:scale-105:active {
+  -webkit-transform: scale(0.95);
+  transform: scale(0.95);
 }
 
 /* Scroll suave */
