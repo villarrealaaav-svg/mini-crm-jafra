@@ -119,9 +119,22 @@ export default function PagosPage() {
     if (!rows.length) return
     const existingPersons = personsStore.getAll()
     const personMap = new Map(existingPersons.map(p => [p.name.toLowerCase().trim(), p]))
+
+    // Clave única por persona+fecha_facturación para evitar duplicados
+    const existingPayments = paymentsStore.getAll()
+    const paymentKeys = new Set(existingPayments.map(p => `${p.person_name.toLowerCase().trim()}|${p.billing_date}`))
+
+    let nuevos = 0
+    let duplicados = 0
+
     for (const row of rows) {
       if (!row.name) continue
       const key = row.name.toLowerCase().trim()
+      const payKey = `${key}|${row.billing_date}`
+
+      // Si ya existe este pago, saltarlo
+      if (paymentKeys.has(payKey)) { duplicados++; continue }
+
       let person = personMap.get(key)
       if (!person) {
         person = personsStore.add({
@@ -142,9 +155,15 @@ export default function PagosPage() {
         status: row.status,
         notes: row.notes,
       })
+      paymentKeys.add(payKey)
+      nuevos++
     }
     load()
-    alert(`✓ ${rows.length} registros importados correctamente`)
+    if (nuevos > 0) {
+      alert(`✓ ${nuevos} registros importados${duplicados > 0 ? ` (${duplicados} ya existían, omitidos)` : ''}`)
+    } else {
+      alert(`Todos los registros ya estaban importados (${duplicados} duplicados omitidos)`)
+    }
   }
 
   function formatDate(d: string) {
