@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { muroStore, productosStore, cursosStore } from '@/lib/store'
+import { muroRankingStore, productosStore, cursosStore } from '@/lib/store'
 
 interface CatalogoItem { id: string; public: boolean }
 
@@ -13,7 +13,7 @@ export default function PublicarPage() {
 
   useEffect(() => {
     setCounts({
-      muro: muroStore.getAll().length,
+      muro: muroRankingStore.get()?.entries.length || 0,
       productos: productosStore.getAll().length,
       cursos: cursosStore.getAll().length,
       catalogos: (() => {

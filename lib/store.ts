@@ -1,4 +1,4 @@
-import type { Person, Payment, Reminder, Meeting, MuroPost, PublicProducto, PublicCurso } from '@/types'
+import type { Person, Payment, Reminder, Meeting, MuroPost, MuroRanking, PublicProducto, PublicCurso } from '@/types'
 
 const KEYS = {
   persons: 'jafra_persons',
@@ -7,6 +7,7 @@ const KEYS = {
   meetings: 'jafra_meetings',
   user: 'jafra_user',
   publicMuro: 'jafra_public_muro',
+  publicMuroRanking: 'jafra_public_muro_ranking',
   publicProductos: 'jafra_public_productos',
   publicCursos: 'jafra_public_cursos',
 }
@@ -184,6 +185,23 @@ export const muroStore = {
   delete: (id: string): void => {
     set(KEYS.publicMuro, get<MuroPost>(KEYS.publicMuro).filter(p => p.id !== id))
   },
+}
+
+// Ranking del Muro — objeto único (mes + lista de personas)
+export const muroRankingStore = {
+  get: (): MuroRanking | null => {
+    if (typeof window === 'undefined') return null
+    try {
+      const raw = localStorage.getItem(KEYS.publicMuroRanking)
+      return raw ? JSON.parse(raw) : null
+    } catch { return null }
+  },
+  save: (ranking: Omit<MuroRanking, 'updated_at'>): MuroRanking => {
+    const data: MuroRanking = { ...ranking, updated_at: new Date().toISOString() }
+    localStorage.setItem(KEYS.publicMuroRanking, JSON.stringify(data))
+    return data
+  },
+  clear: () => localStorage.removeItem(KEYS.publicMuroRanking),
 }
 
 export const productosStore = {

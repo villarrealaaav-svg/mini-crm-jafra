@@ -1,172 +1,185 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Modal from '@/components/Modal'
-import { muroStore } from '@/lib/store'
-import type { MuroPost } from '@/types'
+import { muroRankingStore } from '@/lib/store'
+import type { MuroEntry } from '@/types'
 
-const typeOpts: MuroPost['type'][] = ['logro', 'testimonio', 'reconocimiento']
-const typeEmoji: Record<MuroPost['type'], string> = {
-  logro: '🏆', testimonio: '💬', reconocimiento: '🌟',
+const monthNames = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+  'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE']
+
+function defaultMonth(): string {
+  const d = new Date()
+  return `${monthNames[d.getMonth()]} ${d.getFullYear()}`
 }
 
-const emptyForm = {
-  type: 'logro' as MuroPost['type'],
-  title: '', body: '', author: '', image: '',
-  date: new Date().toISOString().split('T')[0],
-}
+export default function PublicarMuroAdminPage() {
+  const [month, setMonth] = useState('')
+  const [entries, setEntries] = useState<MuroEntry[]>([])
+  const [saving, setSaving] = useState<'' | 'saving' | 'saved'>('')
 
-export default function PublicarMuroPage() {
-  const [posts, setPosts] = useState<MuroPost[]>([])
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState<MuroPost | null>(null)
-  const [form, setForm] = useState(emptyForm)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [fileError, setFileError] = useState('')
-  const imgRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    const r = muroRankingStore.get()
+    if (r) {
+      setMonth(r.month)
+      setEntries(r.entries)
+    } else {
+      setMonth(defaultMonth())
+    }
+  }, [])
 
-  function load() {
-    setPosts(muroStore.getAll().sort((a, b) => b.date.localeCompare(a.date)))
-  }
-  useEffect(() => { load() }, [])
-
-  function openAdd() { setEditing(null); setForm({ ...emptyForm, date: new Date().toISOString().split('T')[0] }); setFileError(''); setModalOpen(true) }
-  function openEdit(p: MuroPost) {
-    setEditing(p)
-    setForm({ type: p.type, title: p.title, body: p.body, author: p.author, image: p.image, date: p.date })
-    setFileError(''); setModalOpen(true)
+  function updateEntry(id: string, patch: Partial<MuroEntry>) {
+    setEntries(es => es.map(e => e.id === id ? { ...e, ...patch } : e))
   }
 
-  function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0]
-    if (!f) return
-    if (f.size > 2 * 1024 * 1024) { setFileError('Imagen muy grande (máx 2MB)'); return }
-    const r = new FileReader()
-    r.onload = ev => setForm(fr => ({ ...fr, image: ev.target?.result as string }))
-    r.readAsDataURL(f)
-    e.target.value = ''
+  function addEntry() {
+    setEntries(es => [...es, { id: crypto.randomUUID(), name: '', score: 0 }])
   }
 
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault()
-    if (editing) muroStore.update(editing.id, form)
-    else muroStore.add(form)
-    load(); setModalOpen(false)
+  function removeEntry(id: string) {
+    setEntries(es => es.filter(e => e.id !== id))
   }
 
-  function formatDate(d: string) {
-    if (!d) return ''
-    return new Date(d + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
+  function moveUp(i: number) {
+    if (i === 0) return
+    setEntries(es => {
+      const next = [...es]
+      ;[next[i - 1], next[i]] = [next[i], next[i - 1]]
+      return next
+    })
   }
+
+  function moveDown(i: number) {
+    setEntries(es => {
+      if (i === es.length - 1) return es
+      const next = [...es]
+      ;[next[i + 1], next[i]] = [next[i], next[i + 1]]
+      return next
+    })
+  }
+
+  function sortByScore() {
+    setEntries(es => [...es].sort((a, b) => b.score - a.score))
+  }
+
+  function handleSave() {
+    setSaving('saving')
+    muroRankingStore.save({
+      month: month.trim() || defaultMonth(),
+      entries: entries.filter(e => e.name.trim()),
+    })
+    setTimeout(() => {
+      setSaving('saved')
+      setTimeout(() => setSaving(''), 2000)
+    }, 200)
+  }
+
+  // Vista previa ordenada como aparecerá en público
+  const previewSorted = [...entries].sort((a, b) => b.score - a.score)
 
   return (
-    <div className="max-w-lg mx-auto pb-24">
+    <div className="max-w-lg mx-auto pb-32">
       <div className="bg-white px-5 pt-12 pb-4 border-b border-gray-200 mb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <Link href="/dashboard/publicar" className="text-[11px] text-jafra-purple font-semibold">← Publicar</Link>
-            <h1 className="text-[22px] font-bold text-gray-900 mt-0.5">Muro del éxito</h1>
-            <p className="text-[11px] text-gray-400 mt-0.5">{posts.length} post{posts.length !== 1 ? 's' : ''}</p>
-          </div>
-          <button onClick={openAdd}
-            className="w-9 h-9 rounded-full bg-jafra text-white flex items-center justify-center text-xl active:scale-95 transition-transform">+</button>
+        <Link href="/dashboard/publicar" className="text-[11px] text-jafra-purple font-semibold">← Publicar</Link>
+        <h1 className="text-[22px] font-bold text-gray-900 mt-0.5">Muro del éxito</h1>
+        <p className="text-[11px] text-gray-400 mt-0.5">Solo editas mes + ranking. Diseño es fijo.</p>
+      </div>
+
+      <div className="px-4 space-y-4">
+
+        {/* Mes */}
+        <div className="card p-4">
+          <label className="block text-xs font-bold uppercase tracking-wide text-jafra-purple mb-2">Mes / Período</label>
+          <input
+            value={month}
+            onChange={e => setMonth(e.target.value)}
+            placeholder="MAYO 2026"
+            className="w-full px-3 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-jafra"
+          />
+          <p className="text-[10px] text-gray-400 mt-1.5">Se muestra grande en mayúsculas debajo del título.</p>
         </div>
-      </div>
 
-      <div className="px-4">
-        {posts.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-4xl mb-3">🌟</p>
-            <p className="text-gray-400 text-sm">Agrega el primer post del muro</p>
+        {/* Lista */}
+        <div className="card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-jafra-purple">Ranking</p>
+            <button onClick={sortByScore}
+              className="text-[10px] px-2 py-1 rounded-full bg-gray-100 text-gray-700 font-semibold">
+              Ordenar por puntaje
+            </button>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {posts.map(p => (
-              <div key={p.id} className="card p-4 flex items-start gap-3">
-                {p.image && <img src={p.image} alt={p.title} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />}
-                <div className="flex-1 min-w-0" onClick={() => openEdit(p)}>
-                  <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                    <span className="text-[10px] uppercase font-bold text-jafra-purple">{typeEmoji[p.type]} {p.type}</span>
+
+          {entries.length === 0 ? (
+            <p className="text-center text-gray-400 text-sm py-6">Sin personas. Agrega la primera.</p>
+          ) : (
+            <div className="space-y-2">
+              {entries.map((e, i) => (
+                <div key={e.id} className="rounded-xl bg-gray-50 border border-gray-200 p-2.5">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <span className="text-[10px] font-bold text-jafra-purple w-6">{i + 1}</span>
+                    <button onClick={() => moveUp(i)} className="text-xs px-1.5 py-0.5 rounded bg-white border border-gray-200" disabled={i === 0}>↑</button>
+                    <button onClick={() => moveDown(i)} className="text-xs px-1.5 py-0.5 rounded bg-white border border-gray-200" disabled={i === entries.length - 1}>↓</button>
+                    <div className="flex-1" />
+                    <button onClick={() => removeEntry(e.id)} className="text-xs text-red-500 px-2">🗑</button>
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 leading-tight">{p.title}</p>
-                  {p.author && <p className="text-xs text-jafra mt-0.5">— {p.author}</p>}
-                  <p className="text-[10px] text-gray-400 mt-1">{formatDate(p.date)}</p>
+                  <div className="flex gap-2">
+                    <input
+                      value={e.name}
+                      onChange={ev => updateEntry(e.id, { name: ev.target.value })}
+                      placeholder="Nombre completo"
+                      className="flex-1 px-2.5 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-jafra bg-white"
+                    />
+                    <input
+                      type="number" step="0.01"
+                      value={e.score || ''}
+                      onChange={ev => updateEntry(e.id, { score: parseFloat(ev.target.value) || 0 })}
+                      placeholder="0.00"
+                      className="w-24 px-2.5 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-jafra text-right bg-white"
+                    />
+                  </div>
                 </div>
-                <button onClick={() => setDeleteId(p.id)} className="text-gray-300">🗑️</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar post' : 'Nuevo post'}>
-        <form onSubmit={handleSave} className="space-y-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
-            <div className="grid grid-cols-3 gap-2">
-              {typeOpts.map(t => (
-                <button key={t} type="button" onClick={() => setForm(f => ({ ...f, type: t }))}
-                  className={`py-2 rounded-xl text-xs font-medium border transition-colors ${form.type === t ? 'bg-jafra text-white border-jafra' : 'border-gray-200 text-gray-600'}`}>
-                  {typeEmoji[t]} {t}
-                </button>
+          <button onClick={addEntry}
+            className="mt-3 w-full py-2.5 rounded-xl border-2 border-dashed border-jafra/30 bg-jafra-light/40 text-xs font-semibold text-jafra-dark active:scale-95 transition-transform">
+            + Agregar persona
+          </button>
+        </div>
+
+        {/* Vista previa orden */}
+        {previewSorted.length > 0 && (
+          <div className="card p-4">
+            <p className="text-xs font-bold uppercase tracking-wide text-jafra-purple mb-2">Vista previa orden</p>
+            <div className="space-y-1">
+              {previewSorted.map((e, i) => (
+                <div key={e.id} className="flex items-center gap-2 text-xs">
+                  <span className="w-5 text-jafra-purple font-bold">{i + 1}</span>
+                  <span className="flex-1 text-gray-700 truncate">{e.name || '(sin nombre)'}</span>
+                  <span className="text-gray-500 font-mono">{e.score.toFixed(2)}</span>
+                </div>
               ))}
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Título*</label>
-            <input required value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              placeholder="Ej. Subí de nivel a Senior" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-jafra" />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Descripción</label>
-            <textarea value={form.body} onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
-              placeholder="Cuéntalo..." rows={3}
-              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-jafra" />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Autor</label>
-              <input value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))}
-                placeholder="Nombre" className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-jafra" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Fecha*</label>
-              <input required type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-jafra" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Imagen (opcional)</label>
-            <input ref={imgRef} type="file" accept="image/*" onChange={handleImage} className="hidden" />
-            {form.image ? (
-              <div className="rounded-xl bg-gray-50 p-2 flex items-center gap-3">
-                <img src={form.image} alt="" className="w-14 h-14 rounded-lg object-cover" />
-                <button type="button" onClick={() => setForm(f => ({ ...f, image: '' }))}
-                  className="text-xs text-red-500 font-medium">Quitar</button>
-              </div>
-            ) : (
-              <button type="button" onClick={() => imgRef.current?.click()}
-                className="w-full py-3 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 text-xs text-gray-500">
-                📷 Sube imagen
-              </button>
-            )}
-            {fileError && <p className="text-xs text-red-500 mt-1">{fileError}</p>}
-          </div>
-          <button type="submit" className="w-full py-3 bg-jafra text-white rounded-xl font-semibold text-sm">
-            {editing ? 'Guardar' : 'Publicar'}
-          </button>
-        </form>
-      </Modal>
+        )}
 
-      <Modal open={!!deleteId} onClose={() => setDeleteId(null)} title="Eliminar post">
-        <p className="text-gray-600 text-sm mb-4">¿Eliminar este post?</p>
-        <div className="flex gap-3">
-          <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-sm font-medium text-gray-600">Cancelar</button>
-          <button onClick={() => { if (deleteId) { muroStore.delete(deleteId); load(); setDeleteId(null) } }}
-            className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-medium">Eliminar</button>
+        <Link href="/p/muro" target="_blank"
+          className="block text-center py-2.5 rounded-xl bg-jafra-light text-jafra-dark text-xs font-semibold">
+          👁 Ver cómo se verá público
+        </Link>
+      </div>
+
+      {/* Footer fijo Guardar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-40"
+        style={{ boxShadow: '0 -4px 14px rgba(0,0,0,0.06)' }}>
+        <div className="max-w-lg mx-auto">
+          <button onClick={handleSave} disabled={saving === 'saving'}
+            className="w-full py-3 rounded-xl bg-jafra text-white text-sm font-bold disabled:opacity-60">
+            {saving === 'saving' ? 'Guardando...' : saving === 'saved' ? '✓ Guardado' : 'Guardar ranking'}
+          </button>
         </div>
-      </Modal>
+      </div>
     </div>
   )
 }

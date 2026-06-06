@@ -49,14 +49,28 @@ export interface Meeting {
 
 // ─── Contenido público (compartible vía /p) ─────────────
 
+// Ranking del Muro del Éxito — formato JAFRA fijo
+export interface MuroEntry {
+  id: string
+  name: string
+  score: number
+}
+
+export interface MuroRanking {
+  month: string            // "MAYO 2026"
+  entries: MuroEntry[]     // se ordenan auto por score desc al render
+  updated_at: string
+}
+
+// (legacy — mantengo type para evitar romper imports)
 export interface MuroPost {
   id: string
   type: 'logro' | 'testimonio' | 'reconocimiento'
   title: string
   body: string
-  author: string         // nombre de quien lo dice (testimonio) o quien lo logra
-  image: string          // base64 dataURL u URL, opcional
-  date: string           // YYYY-MM-DD
+  author: string
+  image: string
+  date: string
   created_at: string
 }
 
