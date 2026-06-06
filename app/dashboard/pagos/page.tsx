@@ -187,7 +187,7 @@ export default function PagosPage() {
       let person = personMap.get(key)
       if (!person) {
         person = personsStore.add({
-          name: row.name, phone: '', notes: '',
+          name: row.name, phone: '', birthday: null, notes: '',
           status: 'activa',
           billing_date: row.billing_date || null,
           payment_date: row.payment_date || null,

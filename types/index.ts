@@ -7,6 +7,7 @@ export interface Person {
   id: string
   name: string
   phone: string
+  birthday: string | null  // YYYY-MM-DD, opcional
   notes: string
   status: PersonStatus
   billing_date: string | null

@@ -9,7 +9,7 @@ import Modal from '@/components/Modal'
 const statusOptions: PersonStatus[] = ['activa', 'pendiente', 'inactiva']
 
 const emptyForm = {
-  name: '', phone: '', notes: '',
+  name: '', phone: '', birthday: '', notes: '',
   status: 'pendiente' as PersonStatus,
   billing_date: '', payment_date: '',
 }
@@ -35,7 +35,7 @@ export default function PersonasPage() {
   function openEdit(p: Person) {
     setEditing(p)
     setForm({
-      name: p.name, phone: p.phone, notes: p.notes,
+      name: p.name, phone: p.phone, birthday: p.birthday || '', notes: p.notes,
       status: p.status,
       billing_date: p.billing_date || '',
       payment_date: p.payment_date || '',
@@ -47,11 +47,26 @@ export default function PersonasPage() {
     e.preventDefault()
     const data = {
       ...form,
+      birthday: form.birthday || null,
       billing_date: form.billing_date || null,
       payment_date: form.payment_date || null,
     }
     if (editing) { personsStore.update(editing.id, data) } else { personsStore.add(data) }
     load(); setModalOpen(false)
+  }
+
+  function formatBirthday(d: string | null) {
+    if (!d) return ''
+    return new Date(d + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'long' })
+  }
+
+  function isBirthdaySoon(d: string | null): boolean {
+    if (!d) return false
+    const today = new Date()
+    const bd = new Date(d + 'T12:00:00')
+    const thisYear = new Date(today.getFullYear(), bd.getMonth(), bd.getDate())
+    const diff = Math.ceil((thisYear.getTime() - today.setHours(0,0,0,0)) / 86400000)
+    return diff >= 0 && diff <= 7
   }
 
   function handleDelete(id: string) {
@@ -122,6 +137,11 @@ export default function PersonasPage() {
                     <div className="flex gap-3 mt-1 flex-wrap">
                       {p.billing_date && <p className="text-xs text-gray-500">📋 Fac: {formatDate(p.billing_date)}</p>}
                       {p.payment_date && <p className="text-xs text-jafra">💰 Pago: {formatDate(p.payment_date)}</p>}
+                      {p.birthday && (
+                        <p className={`text-xs font-medium ${isBirthdaySoon(p.birthday) ? 'text-jafra-purple bg-jafra-light px-1.5 py-0.5 rounded-full' : 'text-jafra-purple'}`}>
+                          🎂 {formatBirthday(p.birthday)}{isBirthdaySoon(p.birthday) ? ' · ¡pronto!' : ''}
+                        </p>
+                      )}
                     </div>
                     {personPayments.length > 0 && (
                       <button onClick={() => setHistoryPerson(p)}
@@ -149,7 +169,10 @@ export default function PersonasPage() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar persona' : 'Nueva persona'}>
         <form onSubmit={handleSave} className="space-y-3">
           <Field label="Nombre*" required value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} placeholder="Nombre completo" />
-          <Field label="Teléfono" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} placeholder="10 dígitos" type="tel" />
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Teléfono" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} placeholder="10 dígitos" type="tel" />
+            <Field label="🎂 Cumpleaños" value={form.birthday} onChange={v => setForm(f => ({ ...f, birthday: v }))} type="date" />
+          </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Estado</label>
             <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value as PersonStatus }))}
