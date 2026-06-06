@@ -217,30 +217,22 @@ export default function DashboardPage() {
         )}
 
         {/* ── ACCESOS RÁPIDOS ── */}
-        <div className="grid grid-cols-3 gap-2.5">
-          <Link href="/dashboard/directorio"
-            className="card p-3 flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg,#fd9644,#e67e22)', boxShadow: '0 4px 10px rgba(230,126,34,0.38)' }}>
-              <BookIcon />
-            </div>
-            <span className="text-[11px] font-semibold text-gray-800">Directorio</span>
-          </Link>
+        <div className="grid grid-cols-2 gap-2.5">
           <Link href="/dashboard/catalogo"
-            className="card p-3 flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
+            className="card p-3.5 flex items-center gap-3 active:scale-95 transition-transform">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'linear-gradient(135deg,#E91E8C,#FF6BB0)', boxShadow: '0 4px 10px rgba(233,30,140,0.38)' }}>
               <CatalogIcon />
             </div>
-            <span className="text-[11px] font-semibold text-gray-800">Catálogo</span>
+            <span className="text-[12px] font-semibold text-gray-800">Catálogo</span>
           </Link>
           <Link href="/dashboard/contacto"
-            className="card p-3 flex flex-col items-center gap-1.5 active:scale-95 transition-transform">
+            className="card p-3.5 flex items-center gap-3 active:scale-95 transition-transform">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'linear-gradient(135deg,#45aaf2,#2d98da)', boxShadow: '0 4px 10px rgba(45,152,218,0.38)' }}>
               <PhoneIcon />
             </div>
-            <span className="text-[11px] font-semibold text-gray-800">Contacto</span>
+            <span className="text-[12px] font-semibold text-gray-800">Contacto</span>
           </Link>
         </div>
 
@@ -393,13 +385,6 @@ function MeetingIcon() {
   return (
     <svg className="w-5 h-5 stroke-white" fill="none" viewBox="0 0 24 24" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
-    </svg>
-  )
-}
-function BookIcon() {
-  return (
-    <svg className="w-4 h-4 stroke-white" fill="none" viewBox="0 0 24 24" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
     </svg>
   )
 }

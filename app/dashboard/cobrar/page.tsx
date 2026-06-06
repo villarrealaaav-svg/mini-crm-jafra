@@ -81,7 +81,7 @@ export default function CobrarPage() {
     <div className="max-w-lg mx-auto pb-24">
       {/* Header */}
       <div className="bg-white px-5 pt-12 pb-5 border-b border-gray-200 mb-4">
-        <h1 className="text-[22px] font-bold text-gray-900">Cobrar</h1>
+        <h1 className="text-[22px] font-bold text-gray-900">Facturas pendientes</h1>
         <p className="text-[11px] text-gray-400 mt-0.5">
           {items.length === 0 ? '¡Todo al día!' : `${items.length} pendiente${items.length !== 1 ? 's' : ''}`}
         </p>

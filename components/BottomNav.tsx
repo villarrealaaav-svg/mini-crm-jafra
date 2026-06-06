@@ -6,8 +6,8 @@ import { usePathname } from 'next/navigation'
 const nav = [
   { href: '/dashboard',              label: 'Inicio',   icon: HomeIcon   },
   { href: '/dashboard/personas',     label: 'Personas', icon: UsersIcon  },
-  { href: '/dashboard/cobrar',       label: 'Cobrar',   icon: null       }, // FAB central
-  { href: '/dashboard/pagos',        label: 'Pagos',    icon: WalletIcon },
+  { href: '/dashboard/cobrar',       label: 'Facturas', icon: null       }, // FAB central
+  { href: '/dashboard/pagos',        label: 'Saldos',   icon: WalletIcon },
   { href: '/dashboard/recordatorios',label: 'Alertas',  icon: BellIcon   },
 ]
 
@@ -23,7 +23,7 @@ export default function BottomNav() {
           {nav.map(({ href, label, icon: Icon }) => {
             const active = pathname === href
 
-            if (label === 'Cobrar') {
+            if (label === 'Facturas') {
               return (
                 <Link key={href} href={href} className="flex-1 flex flex-col items-center pb-2 -mt-5">
                   <div className={`w-13 h-13 w-[52px] h-[52px] rounded-full flex items-center justify-center bg-jafra transition-transform duration-200 ${cobrarActive ? 'scale-105' : 'active:scale-95'}`}
@@ -31,7 +31,7 @@ export default function BottomNav() {
                     <CobrarIcon />
                   </div>
                   <span className={`text-[10px] font-semibold mt-1.5 ${cobrarActive ? 'text-jafra' : 'text-gray-400'}`}>
-                    Cobrar
+                    Facturas
                   </span>
                 </Link>
               )

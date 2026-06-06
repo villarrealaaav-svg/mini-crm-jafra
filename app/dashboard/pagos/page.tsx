@@ -34,6 +34,18 @@ export default function PagosPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
+  // Duplicados detectados durante import
+  const [dupAnalysis, setDupAnalysis] = useState<{
+    cleanRows: ImportRow[]
+    duplicates: Array<{
+      row: ImportRow
+      existing: Payment[]
+      sameAmount: boolean
+      sameDate: boolean
+    }>
+  } | null>(null)
+  const [dupSelected, setDupSelected] = useState<Set<number>>(new Set())
+
   function load() {
     const ps = paymentsStore.getAll()
     setPayments(ps.sort((a, b) => a.billing_date.localeCompare(b.billing_date)))
@@ -117,24 +129,61 @@ export default function PagosPage() {
 
   function doImport(rows: ImportRow[]) {
     if (!rows.length) return
-    const existingPersons = personsStore.getAll()
-    const personMap = new Map(existingPersons.map(p => [p.name.toLowerCase().trim(), p]))
-
-    // Clave única por persona+fecha_facturación para evitar duplicados
     const existingPayments = paymentsStore.getAll()
-    const paymentKeys = new Set(existingPayments.map(p => `${p.person_name.toLowerCase().trim()}|${p.billing_date}`))
 
-    let nuevos = 0
-    let duplicados = 0
+    // Mapa: nombre normalizado → todos los pagos existentes con ese nombre
+    const byName = new Map<string, Payment[]>()
+    for (const p of existingPayments) {
+      const key = p.person_name.toLowerCase().trim()
+      const arr = byName.get(key) || []
+      arr.push(p)
+      byName.set(key, arr)
+    }
+
+    const cleanRows: ImportRow[] = []
+    const duplicates: Array<{ row: ImportRow; existing: Payment[]; sameAmount: boolean; sameDate: boolean }> = []
+    const seenInImport = new Set<string>()
 
     for (const row of rows) {
       if (!row.name) continue
       const key = row.name.toLowerCase().trim()
-      const payKey = `${key}|${row.billing_date}`
 
-      // Si ya existe este pago, saltarlo
-      if (paymentKeys.has(payKey)) { duplicados++; continue }
+      // Detección intra-import: misma fila 2 veces en el mismo Excel
+      const intraKey = `${key}|${row.billing_date}|${row.amount}`
+      if (seenInImport.has(intraKey)) {
+        duplicates.push({ row, existing: [], sameAmount: true, sameDate: true })
+        continue
+      }
+      seenInImport.add(intraKey)
 
+      const existing = byName.get(key) || []
+      if (existing.length > 0) {
+        const sameAmount = existing.some(e => Math.abs((e.amount || 0) - row.amount) < 0.01)
+        const sameDate = existing.some(e => e.billing_date === row.billing_date)
+        duplicates.push({ row, existing, sameAmount, sameDate })
+      } else {
+        cleanRows.push(row)
+      }
+    }
+
+    if (duplicates.length === 0) {
+      // Sin duplicados: importar todo directo
+      importRows(rows)
+      alert(`✓ ${rows.length} registros importados`)
+      return
+    }
+
+    // Hay duplicados: abrir modal comparativo
+    setDupAnalysis({ cleanRows, duplicates })
+    setDupSelected(new Set()) // ninguno seleccionado por default
+  }
+
+  function importRows(rows: ImportRow[]) {
+    const existingPersons = personsStore.getAll()
+    const personMap = new Map(existingPersons.map(p => [p.name.toLowerCase().trim(), p]))
+    for (const row of rows) {
+      if (!row.name) continue
+      const key = row.name.toLowerCase().trim()
       let person = personMap.get(key)
       if (!person) {
         person = personsStore.add({
@@ -155,15 +204,35 @@ export default function PagosPage() {
         status: row.status,
         notes: row.notes,
       })
-      paymentKeys.add(payKey)
-      nuevos++
     }
     load()
-    if (nuevos > 0) {
-      alert(`✓ ${nuevos} registros importados${duplicados > 0 ? ` (${duplicados} ya existían, omitidos)` : ''}`)
-    } else {
-      alert(`Todos los registros ya estaban importados (${duplicados} duplicados omitidos)`)
-    }
+  }
+
+  function confirmDupImport() {
+    if (!dupAnalysis) return
+    const dupRowsToAdd = Array.from(dupSelected).map(i => dupAnalysis.duplicates[i].row)
+    const allToAdd = [...dupAnalysis.cleanRows, ...dupRowsToAdd]
+    importRows(allToAdd)
+    const skipped = dupAnalysis.duplicates.length - dupSelected.size
+    alert(`✓ ${allToAdd.length} importados${skipped > 0 ? ` (${skipped} duplicados omitidos)` : ''}`)
+    setDupAnalysis(null)
+    setDupSelected(new Set())
+  }
+
+  function toggleDup(i: number) {
+    const next = new Set(dupSelected)
+    if (next.has(i)) next.delete(i)
+    else next.add(i)
+    setDupSelected(next)
+  }
+
+  function selectAllDups() {
+    if (!dupAnalysis) return
+    setDupSelected(new Set(dupAnalysis.duplicates.map((_, i) => i)))
+  }
+
+  function deselectAllDups() {
+    setDupSelected(new Set())
   }
 
   function formatDate(d: string) {
@@ -181,8 +250,8 @@ export default function PagosPage() {
       <div className="bg-white px-5 pt-12 pb-4 border-b border-gray-200 mb-4">
         <div className="flex items-center justify-between max-w-lg mx-auto">
           <div>
-            <h1 className="text-[22px] font-bold text-gray-900">Pagos</h1>
-            <p className="text-[11px] text-gray-400 mt-0.5">{payments.length} registros · v5</p>
+            <h1 className="text-[22px] font-bold text-gray-900">Saldos</h1>
+            <p className="text-[11px] text-gray-400 mt-0.5">{payments.length} registros</p>
           </div>
           <div className="flex gap-2">
             <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv,.txt" onChange={handleFileChange} className="hidden" />
@@ -230,7 +299,7 @@ export default function PagosPage() {
             <thead>
               <tr className="bg-jafra-light text-gray-600 text-xs">
                 <th className="px-3 py-2.5 text-left font-semibold">#</th>
-                <th className="px-3 py-2.5 text-left font-semibold min-w-36">Nombre</th>
+                <th className="px-3 py-2.5 text-left font-semibold min-w-52">Nombre</th>
                 <th className="px-3 py-2.5 text-center font-semibold whitespace-nowrap">Fecha Fac.</th>
                 <th className="px-3 py-2.5 text-right font-semibold whitespace-nowrap">Importe</th>
                 <th className="px-3 py-2.5 text-center font-semibold">Mód.</th>
@@ -245,7 +314,7 @@ export default function PagosPage() {
                 return (
                   <tr key={p.id} className={`hover:bg-gray-50 transition-colors ${p.status === 'atrasado' ? 'bg-red-50/40' : ''}`}>
                     <td className="px-3 py-2.5 text-gray-400 text-xs">{i + 1}</td>
-                    <td className="px-3 py-2.5 font-medium text-gray-800 max-w-36 truncate">{p.person_name || '—'}</td>
+                    <td className="px-3 py-2.5 font-medium text-gray-800 whitespace-normal break-words">{p.person_name || '—'}</td>
                     <td className="px-3 py-2.5 text-center text-gray-500 text-xs whitespace-nowrap">{formatDate(p.billing_date)}</td>
                     <td className="px-3 py-2.5 text-right font-semibold text-gray-700 whitespace-nowrap">
                       {p.amount ? `$${p.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}` : '—'}
@@ -342,6 +411,80 @@ export default function PagosPage() {
             {editing ? 'Guardar cambios' : 'Agregar pago'}
           </button>
         </form>
+      </Modal>
+
+      {/* Modal duplicados detectados */}
+      <Modal
+        open={!!dupAnalysis}
+        onClose={() => { setDupAnalysis(null); setDupSelected(new Set()) }}
+        title={`${dupAnalysis?.duplicates.length || 0} duplicados encontrados`}
+        footer={
+          dupAnalysis && (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <button onClick={selectAllDups}
+                  className="flex-1 py-2 rounded-xl bg-gray-100 text-xs font-medium text-gray-700">
+                  Seleccionar todos
+                </button>
+                <button onClick={deselectAllDups}
+                  className="flex-1 py-2 rounded-xl bg-gray-100 text-xs font-medium text-gray-700">
+                  Ninguno
+                </button>
+              </div>
+              <button onClick={confirmDupImport}
+                className="w-full py-3 rounded-xl bg-jafra text-white text-sm font-bold">
+                ✓ Importar {dupAnalysis.cleanRows.length + dupSelected.size} en total
+              </button>
+              <p className="text-[10px] text-gray-400 text-center">
+                {dupAnalysis.cleanRows.length} nuevos + {dupSelected.size} duplicados seleccionados
+              </p>
+            </div>
+          )
+        }
+      >
+        {dupAnalysis && (
+          <div className="space-y-2">
+            <p className="text-xs text-gray-500 mb-2">
+              Estos nombres ya existen. Marca los que sí quieras agregar igual:
+            </p>
+            {dupAnalysis.duplicates.map((d, i) => {
+              const checked = dupSelected.has(i)
+              const newAmount = d.row.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })
+              const conflictBadge = !d.sameAmount
+                ? <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold">⚠ MONTO DISTINTO</span>
+                : d.sameAmount && d.sameDate
+                ? <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold">IDÉNTICO</span>
+                : <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold">FECHA DISTINTA</span>
+              return (
+                <label key={i}
+                  className={`block rounded-xl border p-3 cursor-pointer transition-colors ${checked ? 'bg-jafra-light border-jafra' : 'bg-white border-gray-200'}`}>
+                  <div className="flex items-start gap-2.5">
+                    <input type="checkbox" checked={checked} onChange={() => toggleDup(i)}
+                      className="mt-0.5 accent-jafra w-4 h-4 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                        <p className="text-xs font-bold text-gray-800">{d.row.name}</p>
+                        {conflictBadge}
+                      </div>
+                      <p className="text-[11px] text-gray-600">
+                        <span className="font-semibold text-jafra-dark">Nuevo:</span> ${newAmount} · {formatDate(d.row.billing_date)}
+                      </p>
+                      {d.existing.length > 0 && (
+                        <p className="text-[11px] text-gray-500 mt-0.5">
+                          <span className="font-semibold">Existente{d.existing.length > 1 ? 's' : ''}:</span>{' '}
+                          {d.existing.map(e => `$${(e.amount || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} · ${formatDate(e.billing_date)}`).join(' | ')}
+                        </p>
+                      )}
+                      {d.existing.length === 0 && (
+                        <p className="text-[11px] text-orange-500 mt-0.5">Repetido dentro del mismo archivo Excel</p>
+                      )}
+                    </div>
+                  </div>
+                </label>
+              )
+            })}
+          </div>
+        )}
       </Modal>
 
       {/* Modal eliminar */}
