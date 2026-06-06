@@ -1,4 +1,4 @@
-import type { Person, Payment, Reminder, Meeting } from '@/types'
+import type { Person, Payment, Reminder, Meeting, MuroPost, PublicProducto, PublicCurso } from '@/types'
 
 const KEYS = {
   persons: 'jafra_persons',
@@ -6,6 +6,9 @@ const KEYS = {
   reminders: 'jafra_reminders',
   meetings: 'jafra_meetings',
   user: 'jafra_user',
+  publicMuro: 'jafra_public_muro',
+  publicProductos: 'jafra_public_productos',
+  publicCursos: 'jafra_public_cursos',
 }
 
 function get<T>(key: string): T[] {
@@ -162,5 +165,55 @@ export const meetingsStore = {
   },
   delete: (id: string): void => {
     set(KEYS.meetings, get<Meeting>(KEYS.meetings).filter(m => m.id !== id))
+  },
+}
+
+// ─── Stores PÚBLICOS ────────────────────────────────────
+
+export const muroStore = {
+  getAll: (): MuroPost[] => get<MuroPost>(KEYS.publicMuro),
+  add: (post: Omit<MuroPost, 'id' | 'created_at'>): MuroPost => {
+    const all = get<MuroPost>(KEYS.publicMuro)
+    const created: MuroPost = { ...post, id: crypto.randomUUID(), created_at: new Date().toISOString() }
+    set(KEYS.publicMuro, [...all, created])
+    return created
+  },
+  update: (id: string, updates: Partial<MuroPost>): void => {
+    set(KEYS.publicMuro, get<MuroPost>(KEYS.publicMuro).map(p => p.id === id ? { ...p, ...updates } : p))
+  },
+  delete: (id: string): void => {
+    set(KEYS.publicMuro, get<MuroPost>(KEYS.publicMuro).filter(p => p.id !== id))
+  },
+}
+
+export const productosStore = {
+  getAll: (): PublicProducto[] => get<PublicProducto>(KEYS.publicProductos),
+  add: (prod: Omit<PublicProducto, 'id' | 'created_at'>): PublicProducto => {
+    const all = get<PublicProducto>(KEYS.publicProductos)
+    const created: PublicProducto = { ...prod, id: crypto.randomUUID(), created_at: new Date().toISOString() }
+    set(KEYS.publicProductos, [...all, created])
+    return created
+  },
+  update: (id: string, updates: Partial<PublicProducto>): void => {
+    set(KEYS.publicProductos, get<PublicProducto>(KEYS.publicProductos).map(p => p.id === id ? { ...p, ...updates } : p))
+  },
+  delete: (id: string): void => {
+    set(KEYS.publicProductos, get<PublicProducto>(KEYS.publicProductos).filter(p => p.id !== id))
+  },
+}
+
+export const cursosStore = {
+  getAll: (): PublicCurso[] => get<PublicCurso>(KEYS.publicCursos),
+  add: (curso: Omit<PublicCurso, 'id' | 'created_at'>): PublicCurso => {
+    const all = get<PublicCurso>(KEYS.publicCursos)
+    const created: PublicCurso = { ...curso, id: crypto.randomUUID(), created_at: new Date().toISOString() }
+    set(KEYS.publicCursos, [...all, created])
+    return created
+  },
+  update: (id: string, updates: Partial<PublicCurso>): void => {
+    set(KEYS.publicCursos, get<PublicCurso>(KEYS.publicCursos).map(c => c.id === id ? { ...c, ...updates } : c))
+  },
+  delete: (id: string): void => {
+    set(KEYS.publicCursos, get<PublicCurso>(KEYS.publicCursos).filter(c => c.id !== id))
   },
 }

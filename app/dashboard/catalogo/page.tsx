@@ -8,6 +8,7 @@ interface CatalogoItem {
   title: string
   type: 'link' | 'imagen' | 'pdf' | 'texto'
   content: string  // URL, base64 data URL, o texto
+  public: boolean  // true = visible en /p/catalogos
   created_at: string
 }
 
@@ -26,7 +27,7 @@ function saveItems(items: CatalogoItem[]) {
   localStorage.setItem(KEY, JSON.stringify(items))
 }
 
-const emptyForm = { title: '', type: 'pdf' as CatalogoItem['type'], content: '' }
+const emptyForm = { title: '', type: 'pdf' as CatalogoItem['type'], content: '', public: false }
 
 export default function CatalogoPage() {
   const [items, setItems] = useState<CatalogoItem[]>([])
@@ -98,6 +99,11 @@ export default function CatalogoPage() {
     setDeleteId(null)
   }
 
+  function togglePublic(id: string) {
+    saveItems(getItems().map(i => i.id === id ? { ...i, public: !i.public } : i))
+    load()
+  }
+
   function openItem(item: CatalogoItem) {
     if (item.type === 'link') {
       window.open(item.content, '_blank', 'noopener,noreferrer')
@@ -139,11 +145,21 @@ export default function CatalogoPage() {
               onClick={() => openItem(item)}>
               <span className="text-2xl flex-shrink-0">{typeEmoji[item.type]}</span>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-800 text-sm">{item.title}</p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="font-medium text-gray-800 text-sm">{item.title}</p>
+                  {item.public && (
+                    <span className="text-[9px] bg-jafra-light text-jafra-dark px-1.5 py-0.5 rounded-full font-bold">🌐 PÚBLICO</span>
+                  )}
+                </div>
                 <p className="text-xs text-gray-400 truncate">
                   {item.content.startsWith('data:') ? `Archivo ${item.type}` : item.content}
                 </p>
               </div>
+              <button onClick={e => { e.stopPropagation(); togglePublic(item.id) }}
+                title={item.public ? 'Quitar de público' : 'Hacer público'}
+                className={`w-8 h-8 flex items-center justify-center rounded-full text-sm ${item.public ? 'bg-jafra-light' : 'bg-gray-50'}`}>
+                {item.public ? '🌐' : '🔒'}
+              </button>
               <button onClick={e => { e.stopPropagation(); setDeleteId(item.id) }}
                 className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0">🗑️</button>
             </div>
@@ -229,6 +245,15 @@ export default function CatalogoPage() {
             <p className="text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">{fileError}</p>
           )}
 
+          <label className="flex items-center gap-2.5 p-3 rounded-xl bg-jafra-light border border-jafra/20 cursor-pointer">
+            <input type="checkbox" checked={form.public}
+              onChange={e => setForm(f => ({ ...f, public: e.target.checked }))}
+              className="w-4 h-4 accent-jafra" />
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-jafra-dark">Mostrar en página pública</p>
+              <p className="text-[10px] text-gray-500">Visible para consultoras/clientes con el link público</p>
+            </div>
+          </label>
           <button type="submit" className="w-full py-3 bg-jafra text-white rounded-xl font-semibold text-sm">
             Agregar al catálogo
           </button>

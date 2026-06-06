@@ -46,3 +46,39 @@ export interface Meeting {
   zoom_link: string
   notes: string
 }
+
+// ─── Contenido público (compartible vía /p) ─────────────
+
+export interface MuroPost {
+  id: string
+  type: 'logro' | 'testimonio' | 'reconocimiento'
+  title: string
+  body: string
+  author: string         // nombre de quien lo dice (testimonio) o quien lo logra
+  image: string          // base64 dataURL u URL, opcional
+  date: string           // YYYY-MM-DD
+  created_at: string
+}
+
+export interface PublicProducto {
+  id: string
+  name: string
+  description: string
+  price: string          // string para poder incluir "$" o "desde $X"
+  image: string          // base64 dataURL u URL
+  category: string
+  highlight: boolean     // destacar como "nuevo"
+  created_at: string
+}
+
+export interface PublicCurso {
+  id: string
+  title: string
+  date: string           // YYYY-MM-DD
+  time: string           // HH:MM
+  modality: 'zoom' | 'presencial' | 'híbrido'
+  location: string       // dirección o link zoom
+  description: string
+  image: string          // base64 dataURL u URL, opcional
+  created_at: string
+}
