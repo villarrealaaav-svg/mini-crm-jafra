@@ -1,11 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-jafra:       #E91E8C;
-  --color-jafra-dark:  #C2185B;
-  --color-jafra-light: #FCE4EC;
-  --color-jafra-bg:    #EDF0FF;
-  --color-jafra-muted: #F9A8D4;
+  /* Paleta oficial JAFRA */
+  --color-jafra:        #E91E8C;  /* magenta brand */
+  --color-jafra-dark:   #B0185F;  /* burgundy/rose oscuro */
+  --color-jafra-light:  #FCE4EC;  /* rosa pétalo */
+  --color-jafra-bg:     #F4E8F2;  /* lavanda cremosa */
+  --color-jafra-muted:  #F9A8D4;  /* rosa polvo */
+  --color-jafra-purple: #7C3F8E;  /* violeta JAFRA (footer/branding) */
+  --color-jafra-rose:   #E64B97;  /* rosa coral medio */
+  --color-jafra-cream:  #FFF7F9;  /* crema con tinte rosa */
+  --color-jafra-gold:   #C9A961;  /* dorado champagne (premium) */
 }
 
 :root {
@@ -22,23 +27,40 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Card flotante */
+/* Card flotante — sombra rosada sutil */
 .card {
   background: #ffffff;
   border-radius: 18px;
-  box-shadow: 0 2px 8px rgba(99,102,241,0.10), 0 8px 24px rgba(99,102,241,0.10);
+  box-shadow: 0 2px 8px rgba(124, 63, 142, 0.08), 0 8px 24px rgba(233, 30, 140, 0.06);
 }
 
-/* Sombra rosada para cards de acción JAFRA */
+/* Cards de acción JAFRA */
 .card-jafra {
   background: #ffffff;
   border-radius: 20px;
-  box-shadow: 0 4px 24px rgba(233, 30, 140, 0.10);
+  box-shadow: 0 4px 24px rgba(233, 30, 140, 0.12);
 }
 
-/* Gradient principal JAFRA */
+/* Card hero — gradiente sutil rosa-crema para destacar */
+.card-hero {
+  background: linear-gradient(135deg, #ffffff 0%, #FFF7F9 100%);
+  border-radius: 20px;
+  box-shadow: 0 6px 28px rgba(233, 30, 140, 0.10), 0 2px 8px rgba(124, 63, 142, 0.06);
+}
+
+/* Gradient principal JAFRA — magenta brand */
 .gradient-jafra {
   background: linear-gradient(135deg, #E91E8C 0%, #FF6BB0 100%);
+}
+
+/* Gradient elegante rosa→violeta */
+.gradient-jafra-deep {
+  background: linear-gradient(135deg, #E91E8C 0%, #B0185F 50%, #7C3F8E 100%);
+}
+
+/* Gradient suave para fondos */
+.gradient-jafra-soft {
+  background: linear-gradient(135deg, #FCE4EC 0%, #F4E8F2 100%);
 }
 
 /* Gradientes para icon chips */

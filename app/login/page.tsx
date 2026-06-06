@@ -19,9 +19,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#EDF0FF] flex flex-col items-center justify-center px-6 relative overflow-hidden">
 
-      {/* Círculos decorativos — usando el color JAFRA */}
-      <div className="absolute top-[-80px] right-[-80px] w-72 h-72 rounded-full bg-jafra/8" />
-      <div className="absolute bottom-[-60px] left-[-60px] w-56 h-56 rounded-full bg-indigo-200/30" />
+      {/* Círculos decorativos — colores brand JAFRA */}
+      <div className="absolute top-[-80px] right-[-80px] w-72 h-72 rounded-full bg-jafra/10" />
+      <div className="absolute bottom-[-60px] left-[-60px] w-56 h-56 rounded-full bg-jafra-purple/15" />
+      <div className="absolute top-1/3 left-[-40px] w-32 h-32 rounded-full bg-jafra-muted/25" />
 
       <div className="w-full max-w-sm relative fade-up">
         {/* Logo / Brand */}
@@ -31,7 +32,7 @@ export default function LoginPage() {
             <span className="text-4xl">💎</span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Mini CRM</h1>
-          <p className="text-indigo-400 text-sm mt-1 font-semibold tracking-widest uppercase">JAFRA</p>
+          <p className="text-jafra-purple text-sm mt-1 font-semibold tracking-widest uppercase">JAFRA</p>
         </div>
 
         {/* Card */}
@@ -62,7 +63,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-indigo-300 text-xs mt-6">Tus datos se guardan localmente en tu dispositivo</p>
+        <p className="text-center text-jafra-purple/60 text-xs mt-6">Tus datos se guardan localmente en tu dispositivo</p>
       </div>
     </div>
   )

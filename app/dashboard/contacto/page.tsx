@@ -8,9 +8,9 @@ type QrSlot = 'app' | 'whatsapp'
 type QrStore = Partial<Record<QrSlot, string>>
 
 const sitios = [
-  { label: 'JAFRA',    url: 'https://www.jafra.com.mx' },
-  { label: 'JAFRANET', url: 'https://www.jafranet.com.mx' },
-  { label: 'JAFRAMIA', url: 'https://www.jaframia.com' },
+  { label: 'JAFRA',           url: 'https://www.jafra.com.mx' },
+  { label: 'JAFRANET',        url: 'https://www.jafranet.com.mx' },
+  { label: 'Mi Programa JAFRA', url: 'https://www.miprogramajafra.com' },
 ]
 
 export default function ContactoPage() {

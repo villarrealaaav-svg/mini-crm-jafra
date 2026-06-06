@@ -18,7 +18,7 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50">
       {/* Sombra superior suave */}
-      <div className="bg-white" style={{ boxShadow: '0 -4px 24px rgba(99,102,241,0.10)' }}>
+      <div className="bg-white" style={{ boxShadow: '0 -4px 24px rgba(124, 63, 142, 0.10)' }}>
         <div className="flex max-w-lg mx-auto items-end px-2">
           {nav.map(({ href, label, icon: Icon }) => {
             const active = pathname === href

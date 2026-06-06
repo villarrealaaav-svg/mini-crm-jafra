@@ -65,7 +65,7 @@ export default function DashboardPage() {
       <div className="px-5 pt-14 pb-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[12px] text-indigo-400 font-medium">{greeting}</p>
+            <p className="text-[12px] text-jafra-purple font-semibold tracking-wide">{greeting}</p>
             <h1 className="text-[28px] font-bold text-gray-900 leading-none mt-0.5">{firstName}</h1>
           </div>
           {/* Avatar */}
@@ -79,26 +79,26 @@ export default function DashboardPage() {
 
         {/* ── HERO FINANCIERO ── */}
         {(totalCobrado > 0 || totalPendiente > 0) ? (
-          <div className="card p-4">
+          <div className="card-hero p-4">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Ciclo actual</p>
-              <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full">
+              <p className="text-[10px] font-bold text-jafra-purple uppercase tracking-widest">Ciclo actual</p>
+              <span className="text-[10px] font-bold text-jafra bg-jafra-light px-2 py-0.5 rounded-full">
                 {pctCobrado}% cobrado
               </span>
             </div>
             <div className="flex items-end justify-between mb-3">
               <div>
-                <p className="text-[10px] text-gray-400 mb-0.5">Cobrado</p>
+                <p className="text-[10px] text-gray-500 mb-0.5 font-medium">Cobrado</p>
                 <p className="text-[28px] font-bold text-gray-900 leading-none">${fmt(totalCobrado)}</p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] text-gray-400 mb-0.5">Pendiente</p>
-                <p className="text-[18px] font-bold text-amber-500 leading-none">${fmt(totalPendiente)}</p>
+                <p className="text-[10px] text-gray-500 mb-0.5 font-medium">Pendiente</p>
+                <p className="text-[18px] font-bold text-jafra-dark leading-none">${fmt(totalPendiente)}</p>
               </div>
             </div>
-            <div className="h-1.5 bg-indigo-50 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-jafra-light rounded-full overflow-hidden">
               <div className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${pctCobrado}%`, background: 'linear-gradient(90deg,#26de81,#20bf6b)' }} />
+                style={{ width: `${pctCobrado}%`, background: 'linear-gradient(90deg,#E91E8C,#FF6BB0)' }} />
             </div>
           </div>
         ) : null}
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           <Link href="/dashboard/cobrar"
             className="card p-3.5 flex items-center gap-3 active:scale-95 transition-transform">
             <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg,#FF6B6B,#EE5A24)', boxShadow: '0 4px 12px rgba(238,90,36,0.40)' }}>
+              style={{ background: 'linear-gradient(135deg,#FF8FA8,#E64B97)', boxShadow: '0 4px 12px rgba(230,75,151,0.40)' }}>
               <MoneyIcon />
             </div>
             <div className="min-w-0">
@@ -136,7 +136,7 @@ export default function DashboardPage() {
           <Link href="/dashboard/recordatorios"
             className="card p-3.5 flex items-center gap-3 active:scale-95 transition-transform">
             <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg,#a55eea,#7048e8)', boxShadow: '0 4px 12px rgba(112,72,232,0.40)' }}>
+              style={{ background: 'linear-gradient(135deg,#A864C0,#7C3F8E)', boxShadow: '0 4px 12px rgba(124,63,142,0.40)' }}>
               <BellChipIcon />
             </div>
             <div>
@@ -148,7 +148,7 @@ export default function DashboardPage() {
           <Link href="/dashboard/reuniones"
             className="card p-3.5 flex items-center gap-3 active:scale-95 transition-transform">
             <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg,#45aaf2,#2d98da)', boxShadow: '0 4px 12px rgba(45,152,218,0.40)' }}>
+              style={{ background: 'linear-gradient(135deg,#E5C277,#C9A961)', boxShadow: '0 4px 12px rgba(201,169,97,0.40)' }}>
               <MeetingIcon />
             </div>
             <div>
@@ -173,7 +173,7 @@ export default function DashboardPage() {
                     : 'Urgentes'}
                 </p>
               </div>
-              <Link href="/dashboard/cobrar" className="text-[11px] text-indigo-500 font-semibold">
+              <Link href="/dashboard/cobrar" className="text-[11px] text-jafra-purple font-semibold">
                 Ver todos →
               </Link>
             </div>
@@ -229,7 +229,7 @@ export default function DashboardPage() {
           <Link href="/dashboard/contacto"
             className="card p-3.5 flex items-center gap-3 active:scale-95 transition-transform">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg,#45aaf2,#2d98da)', boxShadow: '0 4px 10px rgba(45,152,218,0.38)' }}>
+              style={{ background: 'linear-gradient(135deg,#E5C277,#C9A961)', boxShadow: '0 4px 10px rgba(201,169,97,0.38)' }}>
               <PhoneIcon />
             </div>
             <span className="text-[12px] font-semibold text-gray-800">Contacto</span>
@@ -253,7 +253,7 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center justify-between mb-2.5">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Próximos pagos</p>
-                <Link href="/dashboard/cobrar" className="text-[11px] text-indigo-500 font-semibold">Ver todos →</Link>
+                <Link href="/dashboard/cobrar" className="text-[11px] text-jafra-purple font-semibold">Ver todos →</Link>
               </div>
               <div className="card overflow-hidden">
                 {proximos.map((p, i) => (
@@ -298,7 +298,7 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-center justify-between mb-2.5">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pagados recientemente</p>
-                <Link href="/dashboard/pagos" className="text-[11px] text-indigo-500 font-semibold">Ver todos →</Link>
+                <Link href="/dashboard/pagos" className="text-[11px] text-jafra-purple font-semibold">Ver todos →</Link>
               </div>
               <div className="card overflow-hidden">
                 {recientes.map((p, i) => (
@@ -347,7 +347,7 @@ export default function DashboardPage() {
                 Importar Excel
               </Link>
               <Link href="/dashboard/personas"
-                className="px-5 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl text-[12px] font-semibold">
+                className="px-5 py-2.5 bg-jafra-light text-jafra rounded-xl text-[12px] font-semibold">
                 + Agregar
               </Link>
             </div>
