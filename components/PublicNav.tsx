@@ -3,17 +3,17 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const nav = [
-  { href: '/p',           label: 'Inicio',    icon: HomeIcon    },
-  { href: '/p/catalogos', label: 'Catálogos', icon: BookIcon    },
-  { href: '/p/muro',      label: 'Éxito',     icon: TrophyIcon  },
-  { href: '/p/productos', label: 'Productos', icon: SparkleIcon },
-  { href: '/p/cursos',    label: 'Cursos',    icon: CapIcon     },
-  { href: '/p/contacto',  label: 'Contacto',  icon: PhoneIcon   },
-]
-
-export default function PublicNav() {
+export default function PublicNav({ slug }: { slug: string }) {
   const pathname = usePathname()
+  const base = `/p/${slug}`
+  const nav = [
+    { href: base,                label: 'Inicio',    icon: HomeIcon    },
+    { href: `${base}/catalogos`, label: 'Catálogos', icon: BookIcon    },
+    { href: `${base}/muro`,      label: 'Éxito',     icon: TrophyIcon  },
+    { href: `${base}/productos`, label: 'Productos', icon: SparkleIcon },
+    { href: `${base}/cursos`,    label: 'Cursos',    icon: CapIcon     },
+    { href: `${base}/contacto`,  label: 'Contacto',  icon: PhoneIcon   },
+  ]
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50">

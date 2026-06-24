@@ -12,7 +12,7 @@ const emptyForm = {
   highlight: true,
 }
 
-function PublicarProductosInner() {
+function PublicarProductosInner({ tenant }: { tenant: string }) {
   const [items, setItems] = useState<PublicProducto[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<PublicProducto | null>(null)
@@ -24,10 +24,10 @@ function PublicarProductosInner() {
   const imgRef = useRef<HTMLInputElement>(null)
 
   async function load() {
-    const list = await getProductos()
+    const list = await getProductos(tenant)
     setItems(list.sort((a, b) => b.created_at.localeCompare(a.created_at)))
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [tenant]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function openAdd() { setEditing(null); setForm(emptyForm); setImageFile(null); setFileError(''); setModalOpen(true) }
   function openEdit(p: PublicProducto) {
@@ -40,7 +40,7 @@ function PublicarProductosInner() {
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
     if (!f) return
-    if (f.size > 6 * 1024 * 1024) { setFileError('Imagen muy grande (máx 6MB)'); return }
+    if (f.size > 50 * 1024 * 1024) { setFileError('Imagen muy grande (máx 50MB)'); return }
     setImageFile(f)
     const r = new FileReader()
     r.onload = ev => setForm(fr => ({ ...fr, image: ev.target?.result as string }))
@@ -188,7 +188,7 @@ function PublicarProductosInner() {
 export default function PublicarProductosPage() {
   return (
     <AdminGate>
-      <PublicarProductosInner />
+      {(s) => <PublicarProductosInner tenant={s.tenant} />}
     </AdminGate>
   )
 }

@@ -5,13 +5,13 @@ import Link from 'next/link'
 import AdminGate from '@/components/AdminGate'
 import { getMuro, getProductos, getCursos, getCatalogo } from '@/lib/publicApi'
 
-function PublicarInner() {
+function PublicarInner({ tenant, name }: { tenant: string; name: string }) {
   const [counts, setCounts] = useState({ muro: 0, productos: 0, cursos: 0, catalogos: 0 })
   const [copied, setCopied] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
 
   useEffect(() => {
-    Promise.all([getMuro(), getProductos(), getCursos(), getCatalogo()])
+    Promise.all([getMuro(tenant), getProductos(tenant), getCursos(tenant), getCatalogo(tenant)])
       .then(([muro, productos, cursos, catalogo]) => {
         setCounts({
           muro: muro?.entries.length || 0,
@@ -22,9 +22,9 @@ function PublicarInner() {
       })
       .catch(() => {})
     if (typeof window !== 'undefined') {
-      setShareUrl(`${window.location.origin}/p`)
+      setShareUrl(`${window.location.origin}/p/${tenant}`)
     }
-  }, [])
+  }, [tenant])
 
   async function copyLink() {
     try {
@@ -57,7 +57,7 @@ function PublicarInner() {
     <div className="max-w-lg mx-auto pb-24">
       <div className="bg-white px-5 pt-12 pb-4 border-b border-gray-200 mb-4">
         <h1 className="text-[22px] font-bold text-gray-900">Publicar</h1>
-        <p className="text-[11px] text-gray-400 mt-0.5">Contenido visible para tu equipo</p>
+        <p className="text-[11px] text-gray-400 mt-0.5">Espacio de <span className="font-semibold text-jafra-purple">{name}</span> · visible para tu equipo</p>
       </div>
 
       <div className="px-4 space-y-4">
@@ -118,7 +118,7 @@ function PublicarInner() {
 export default function PublicarPage() {
   return (
     <AdminGate>
-      <PublicarInner />
+      {(s) => <PublicarInner tenant={s.tenant} name={s.name} />}
     </AdminGate>
   )
 }

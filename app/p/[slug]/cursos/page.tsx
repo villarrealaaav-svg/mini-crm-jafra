@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { getCursos } from '@/lib/publicApi'
 import type { PublicCurso } from '@/types'
 
@@ -11,16 +12,17 @@ const modMeta: Record<PublicCurso['modality'], { label: string; tint: string }> 
 }
 
 export default function PublicCursosPage() {
+  const { slug } = useParams<{ slug: string }>()
   const [items, setItems] = useState<PublicCurso[]>([])
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
-    getCursos().then(list => {
+    getCursos(slug).then(list => {
       setItems(list
         .filter(c => c.date >= today)
         .sort((a, b) => a.date.localeCompare(b.date)))
     }).catch(() => setItems([]))
-  }, [])
+  }, [slug])
 
   function formatDate(d: string) {
     if (!d) return ''

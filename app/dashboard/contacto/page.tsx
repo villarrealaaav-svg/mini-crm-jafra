@@ -11,7 +11,7 @@ const sitios = [
   { label: 'Mi Programa JAFRA', url: 'https://www.miprogramajafra.com' },
 ]
 
-function ContactoInner() {
+function ContactoInner({ tenant }: { tenant: string }) {
   const [qrs, setQrs] = useState<ContactoQR>({})
   const [zoom, setZoom] = useState<string | null>(null)
   const [busy, setBusy] = useState<QrSlot | null>(null)
@@ -19,18 +19,18 @@ function ContactoInner() {
   const waRef  = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    getContactoQR().then(setQrs).catch(() => setQrs({}))
-  }, [])
+    getContactoQR(tenant).then(setQrs).catch(() => setQrs({}))
+  }, [tenant])
 
   async function handleFile(slot: QrSlot, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-    if (file.size > 6 * 1024 * 1024) { alert('Imagen muy grande (máx 6MB)'); return }
+    if (file.size > 50 * 1024 * 1024) { alert('Imagen muy grande (máx 50MB)'); return }
     setBusy(slot)
     try {
       await setContactoQR(slot, file)
-      setQrs(await getContactoQR())
+      setQrs(await getContactoQR(tenant))
     } catch (err) {
       alert('Error: ' + (err instanceof Error ? err.message : String(err)))
     } finally {
@@ -42,7 +42,7 @@ function ContactoInner() {
     setBusy(slot)
     try {
       await removeContactoQR(slot)
-      setQrs(await getContactoQR())
+      setQrs(await getContactoQR(tenant))
     } catch (err) {
       alert('Error: ' + (err instanceof Error ? err.message : String(err)))
     } finally {
@@ -142,7 +142,7 @@ function ContactoInner() {
 export default function ContactoPage() {
   return (
     <AdminGate>
-      <ContactoInner />
+      {(s) => <ContactoInner tenant={s.tenant} />}
     </AdminGate>
   )
 }

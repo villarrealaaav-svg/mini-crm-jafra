@@ -12,7 +12,7 @@ const typeEmoji: Record<CatalogoItem['type'], string> = {
 
 const emptyForm = { title: '', type: 'pdf' as CatalogoItem['type'], content: '', public: false }
 
-function CatalogoInner() {
+function CatalogoInner({ tenant }: { tenant: string }) {
   const [items, setItems] = useState<CatalogoItem[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
@@ -24,10 +24,10 @@ function CatalogoInner() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function load() {
-    const list = await getCatalogo()
+    const list = await getCatalogo(tenant)
     setItems(list.sort((a, b) => b.created_at.localeCompare(a.created_at)))
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [tenant]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -46,9 +46,9 @@ function CatalogoInner() {
       return
     }
 
-    // Límite 10MB (ahora va a Storage, no a localStorage)
-    if (file.size > 10 * 1024 * 1024) {
-      setFileError(`Archivo muy grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máx 10MB.`)
+    // Límite 50MB (va a Supabase Storage)
+    if (file.size > 50 * 1024 * 1024) {
+      setFileError(`Archivo muy grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máx 50MB.`)
       return
     }
 
@@ -318,7 +318,7 @@ function CatalogoInner() {
 export default function CatalogoPage() {
   return (
     <AdminGate>
-      <CatalogoInner />
+      {(s) => <CatalogoInner tenant={s.tenant} />}
     </AdminGate>
   )
 }

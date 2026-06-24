@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { getCatalogo } from '@/lib/publicApi'
 import type { CatalogoItem } from '@/types'
 
@@ -9,14 +10,15 @@ const typeEmoji: Record<CatalogoItem['type'], string> = {
 }
 
 export default function PublicCatalogosPage() {
+  const { slug } = useParams<{ slug: string }>()
   const [items, setItems] = useState<CatalogoItem[]>([])
   const [viewing, setViewing] = useState<CatalogoItem | null>(null)
 
   useEffect(() => {
-    getCatalogo()
+    getCatalogo(slug)
       .then(list => setItems(list.filter(i => i.public)))
       .catch(() => setItems([]))
-  }, [])
+  }, [slug])
 
   function openItem(item: CatalogoItem) {
     if (item.type === 'link') {

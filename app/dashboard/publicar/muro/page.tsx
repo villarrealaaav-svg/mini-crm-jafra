@@ -14,13 +14,13 @@ function defaultMonth(): string {
   return `${monthNames[d.getMonth()]} ${d.getFullYear()}`
 }
 
-function PublicarMuroInner() {
+function PublicarMuroInner({ tenant }: { tenant: string }) {
   const [month, setMonth] = useState('')
   const [entries, setEntries] = useState<MuroEntry[]>([])
   const [saving, setSaving] = useState<'' | 'saving' | 'saved' | 'error'>('')
 
   useEffect(() => {
-    getMuro().then(r => {
+    getMuro(tenant).then(r => {
       if (r) {
         setMonth(r.month)
         setEntries(r.entries)
@@ -28,7 +28,7 @@ function PublicarMuroInner() {
         setMonth(defaultMonth())
       }
     }).catch(() => setMonth(defaultMonth()))
-  }, [])
+  }, [tenant])
 
   function updateEntry(id: string, patch: Partial<MuroEntry>) {
     setEntries(es => es.map(e => e.id === id ? { ...e, ...patch } : e))
@@ -192,7 +192,7 @@ function PublicarMuroInner() {
 export default function PublicarMuroAdminPage() {
   return (
     <AdminGate>
-      <PublicarMuroInner />
+      {(s) => <PublicarMuroInner tenant={s.tenant} />}
     </AdminGate>
   )
 }

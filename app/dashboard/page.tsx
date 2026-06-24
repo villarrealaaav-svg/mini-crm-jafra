@@ -244,6 +244,18 @@ export default function DashboardPage() {
           </Link>
         </div>
 
+        {/* ── Administradoras (solo dueña, NIP maestro) ── */}
+        <Link href="/dashboard/admins"
+          className="card p-3.5 flex items-center gap-3 active:scale-[0.99] transition-transform">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
+            style={{ background: 'linear-gradient(135deg,#7C3F8E,#B0185F)' }}>👑</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-bold text-gray-900">Administradoras</p>
+            <p className="text-[11px] text-gray-400">Crea espacios y NIPs (solo dueña)</p>
+          </div>
+          <span className="text-jafra-purple">→</span>
+        </Link>
+
         {/* ── PRÓXIMOS PAGOS (6–30 días) ── */}
         {(() => {
           const proximos = payments

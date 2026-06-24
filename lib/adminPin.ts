@@ -1,18 +1,31 @@
-// PIN de admin en sessionStorage (se teclea 1 vez por sesión).
-// NO es el secreto real — el PIN se valida del lado servidor en la Edge Function.
-const KEY = 'jafra_admin_pin'
+// Sesión de admin en sessionStorage (NIP + espacio resuelto en el servidor).
+// El NIP NO es el secreto real — se valida del lado servidor (Edge Function).
+export interface AdminSession {
+  pin: string
+  tenant: string         // slug del espacio (vacío si role master)
+  name: string
+  role: 'admin' | 'master'
+}
 
-export const getPin = (): string | null => {
+const KEY = 'jafra_admin_session'
+
+export const getSession = (): AdminSession | null => {
   if (typeof window === 'undefined') return null
-  return sessionStorage.getItem(KEY)
+  try {
+    const raw = sessionStorage.getItem(KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
 }
 
-export const setPin = (pin: string): void => {
+export const setSession = (s: AdminSession): void => {
   if (typeof window === 'undefined') return
-  sessionStorage.setItem(KEY, pin)
+  sessionStorage.setItem(KEY, JSON.stringify(s))
 }
 
-export const clearPin = (): void => {
+export const clearSession = (): void => {
   if (typeof window === 'undefined') return
   sessionStorage.removeItem(KEY)
 }
+
+// PIN de la sesión actual (para las llamadas de escritura)
+export const getPin = (): string | null => getSession()?.pin ?? null

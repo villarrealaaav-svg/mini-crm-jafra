@@ -1,44 +1,41 @@
 'use client'
 
-import Link from 'next/link'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-const cards = [
-  { href: '/p/catalogos', title: 'Catálogos',      desc: 'Descarga el catálogo del mes', emoji: '📖', tint: 'linear-gradient(135deg,#E91E8C,#FF6BB0)' },
-  { href: '/p/muro',      title: 'Muro del éxito', desc: 'Historias y reconocimientos',   emoji: '🏆', tint: 'linear-gradient(135deg,#E5C277,#C9A961)' },
-  { href: '/p/productos', title: 'Nuevos',         desc: 'Lo último de JAFRA',           emoji: '✨', tint: 'linear-gradient(135deg,#FF8FA8,#E64B97)' },
-  { href: '/p/cursos',    title: 'Cursos',         desc: 'Capacitaciones próximas',       emoji: '🎓', tint: 'linear-gradient(135deg,#A864C0,#7C3F8E)' },
-  { href: '/p/contacto',  title: 'Contacto',       desc: 'JAFRA & asistencia',           emoji: '📞', tint: 'linear-gradient(135deg,#FCE4EC,#F9A8D4)' },
-]
+// Raíz pública sin espacio: pide el link de la líder.
+export default function PublicRoot() {
+  const router = useRouter()
+  const [code, setCode] = useState('')
 
-export default function PublicHome() {
+  function go(e: React.FormEvent) {
+    e.preventDefault()
+    const slug = code.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+    if (slug) router.push(`/p/${slug}`)
+  }
+
   return (
-    <div className="max-w-lg mx-auto px-5 pb-24">
-      {/* Hero */}
-      <div className="pt-14 pb-6 text-center fade-up">
-        <div className="w-16 h-16 rounded-2xl gradient-jafra flex items-center justify-center mx-auto mb-3"
+    <div className="min-h-screen bg-[#EDF0FF] flex flex-col justify-center px-6">
+      <div className="max-w-sm w-full mx-auto text-center">
+        <div className="w-16 h-16 rounded-2xl gradient-jafra flex items-center justify-center mx-auto mb-4"
           style={{ boxShadow: '0 8px 24px rgba(233,30,140,0.30)' }}>
           <span className="text-3xl">💎</span>
         </div>
-        <h1 className="text-[26px] font-bold text-gray-900 tracking-tight">Bienvenida a JAFRA</h1>
-        <p className="text-jafra-purple text-xs mt-1 font-semibold tracking-widest uppercase">Tu equipo, tu éxito</p>
-      </div>
-
-      {/* Grid de secciones */}
-      <div className="space-y-2.5 fade-up">
-        {cards.map(c => (
-          <Link key={c.href} href={c.href}
-            className="card p-4 flex items-center gap-4 active:scale-[0.98] transition-transform">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: c.tint, boxShadow: '0 4px 12px rgba(233,30,140,0.18)' }}>
-              <span className="text-2xl">{c.emoji}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-gray-900 text-sm">{c.title}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{c.desc}</p>
-            </div>
-            <span className="text-jafra text-lg">→</span>
-          </Link>
-        ))}
+        <h1 className="text-[22px] font-bold text-gray-900">Material JAFRA</h1>
+        <p className="text-sm text-gray-500 mt-1 mb-6">
+          Abre el link que te compartió tu líder<br />(ejemplo: <span className="font-mono text-jafra-purple">.../p/rosa</span>)
+        </p>
+        <form onSubmit={go} className="card p-4 space-y-3">
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="Nombre del link (ej. rosa)"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-sm focus:outline-none focus:border-jafra"
+          />
+          <button type="submit" className="w-full py-3 rounded-xl bg-jafra text-white font-bold text-sm">
+            Entrar
+          </button>
+        </form>
       </div>
     </div>
   )

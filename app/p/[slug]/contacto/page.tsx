@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
 import { getContactoQR } from '@/lib/publicApi'
 import type { ContactoQR } from '@/types'
 
@@ -11,12 +12,13 @@ const sitios = [
 ]
 
 export default function PublicContactoPage() {
+  const { slug } = useParams<{ slug: string }>()
   const [qrs, setQrs] = useState<ContactoQR>({})
   const [zoom, setZoom] = useState<string | null>(null)
 
   useEffect(() => {
-    getContactoQR().then(setQrs).catch(() => setQrs({}))
-  }, [])
+    getContactoQR(slug).then(setQrs).catch(() => setQrs({}))
+  }, [slug])
 
   return (
     <div className="max-w-lg mx-auto pb-24">

@@ -15,7 +15,7 @@ const emptyForm = {
   location: '', description: '', image: '',
 }
 
-function PublicarCursosInner() {
+function PublicarCursosInner({ tenant }: { tenant: string }) {
   const [items, setItems] = useState<PublicCurso[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<PublicCurso | null>(null)
@@ -27,10 +27,10 @@ function PublicarCursosInner() {
   const imgRef = useRef<HTMLInputElement>(null)
 
   async function load() {
-    const list = await getCursos()
+    const list = await getCursos(tenant)
     setItems(list.sort((a, b) => a.date.localeCompare(b.date)))
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [tenant]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function openAdd() { setEditing(null); setForm(emptyForm); setImageFile(null); setFileError(''); setModalOpen(true) }
   function openEdit(c: PublicCurso) {
@@ -43,7 +43,7 @@ function PublicarCursosInner() {
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
     if (!f) return
-    if (f.size > 6 * 1024 * 1024) { setFileError('Imagen muy grande (máx 6MB)'); return }
+    if (f.size > 50 * 1024 * 1024) { setFileError('Imagen muy grande (máx 50MB)'); return }
     setImageFile(f)
     const r = new FileReader()
     r.onload = ev => setForm(fr => ({ ...fr, image: ev.target?.result as string }))
@@ -195,7 +195,7 @@ function PublicarCursosInner() {
 export default function PublicarCursosPage() {
   return (
     <AdminGate>
-      <PublicarCursosInner />
+      {(s) => <PublicarCursosInner tenant={s.tenant} />}
     </AdminGate>
   )
 }
