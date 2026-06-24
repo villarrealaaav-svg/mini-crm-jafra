@@ -1,15 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-
-interface CatalogoItem {
-  id: string
-  title: string
-  type: 'link' | 'imagen' | 'pdf' | 'texto'
-  content: string
-  public: boolean
-  created_at: string
-}
+import { getCatalogo } from '@/lib/publicApi'
+import type { CatalogoItem } from '@/types'
 
 const typeEmoji: Record<CatalogoItem['type'], string> = {
   link: '🔗', imagen: '🖼️', pdf: '📄', texto: '📝',
@@ -20,10 +13,9 @@ export default function PublicCatalogosPage() {
   const [viewing, setViewing] = useState<CatalogoItem | null>(null)
 
   useEffect(() => {
-    try {
-      const raw = JSON.parse(localStorage.getItem('jafra_catalogo') || '[]')
-      setItems(raw.filter((i: CatalogoItem) => i.public))
-    } catch { /* noop */ }
+    getCatalogo()
+      .then(list => setItems(list.filter(i => i.public)))
+      .catch(() => setItems([]))
   }, [])
 
   function openItem(item: CatalogoItem) {

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { muroRankingStore } from '@/lib/store'
+import AdminGate from '@/components/AdminGate'
+import { getMuro, saveMuro } from '@/lib/publicApi'
 import type { MuroEntry } from '@/types'
 
 const monthNames = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
@@ -13,19 +14,20 @@ function defaultMonth(): string {
   return `${monthNames[d.getMonth()]} ${d.getFullYear()}`
 }
 
-export default function PublicarMuroAdminPage() {
+function PublicarMuroInner() {
   const [month, setMonth] = useState('')
   const [entries, setEntries] = useState<MuroEntry[]>([])
-  const [saving, setSaving] = useState<'' | 'saving' | 'saved'>('')
+  const [saving, setSaving] = useState<'' | 'saving' | 'saved' | 'error'>('')
 
   useEffect(() => {
-    const r = muroRankingStore.get()
-    if (r) {
-      setMonth(r.month)
-      setEntries(r.entries)
-    } else {
-      setMonth(defaultMonth())
-    }
+    getMuro().then(r => {
+      if (r) {
+        setMonth(r.month)
+        setEntries(r.entries)
+      } else {
+        setMonth(defaultMonth())
+      }
+    }).catch(() => setMonth(defaultMonth()))
   }, [])
 
   function updateEntry(id: string, patch: Partial<MuroEntry>) {
@@ -62,16 +64,19 @@ export default function PublicarMuroAdminPage() {
     setEntries(es => [...es].sort((a, b) => b.score - a.score))
   }
 
-  function handleSave() {
+  async function handleSave() {
     setSaving('saving')
-    muroRankingStore.save({
-      month: month.trim() || defaultMonth(),
-      entries: entries.filter(e => e.name.trim()),
-    })
-    setTimeout(() => {
+    try {
+      await saveMuro(
+        month.trim() || defaultMonth(),
+        entries.filter(e => e.name.trim()),
+      )
       setSaving('saved')
       setTimeout(() => setSaving(''), 2000)
-    }, 200)
+    } catch (err) {
+      setSaving('error')
+      alert('No se pudo guardar: ' + (err instanceof Error ? err.message : String(err)))
+    }
   }
 
   // Vista previa ordenada como aparecerá en público
@@ -181,5 +186,13 @@ export default function PublicarMuroAdminPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function PublicarMuroAdminPage() {
+  return (
+    <AdminGate>
+      <PublicarMuroInner />
+    </AdminGate>
   )
 }

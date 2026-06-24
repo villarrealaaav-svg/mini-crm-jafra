@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { muroRankingStore } from '@/lib/store'
+import { getMuro } from '@/lib/publicApi'
 import type { MuroRanking, MuroEntry } from '@/types'
 
 export default function PublicMuroPage() {
   const [ranking, setRanking] = useState<MuroRanking | null>(null)
 
   useEffect(() => {
-    setRanking(muroRankingStore.get())
+    getMuro().then(setRanking).catch(() => setRanking(null))
   }, [])
 
   const sorted: MuroEntry[] = ranking

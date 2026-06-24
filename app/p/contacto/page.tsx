@@ -1,11 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-
-const QR_KEY = 'jafra_qr_images'
-
-type QrSlot = 'app' | 'whatsapp'
-type QrStore = Partial<Record<QrSlot, string>>
+import { useEffect, useState } from 'react'
+import { getContactoQR } from '@/lib/publicApi'
+import type { ContactoQR } from '@/types'
 
 const sitios = [
   { label: 'JAFRA',             url: 'https://www.jafra.com.mx' },
@@ -14,33 +11,12 @@ const sitios = [
 ]
 
 export default function PublicContactoPage() {
-  const [qrs, setQrs] = useState<QrStore>({})
+  const [qrs, setQrs] = useState<ContactoQR>({})
   const [zoom, setZoom] = useState<string | null>(null)
-  const appRef = useRef<HTMLInputElement>(null)
-  const waRef  = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const raw = localStorage.getItem(QR_KEY)
-    if (raw) try { setQrs(JSON.parse(raw)) } catch {}
+    getContactoQR().then(setQrs).catch(() => setQrs({}))
   }, [])
-
-  function saveQrs(next: QrStore) {
-    setQrs(next)
-    localStorage.setItem(QR_KEY, JSON.stringify(next))
-  }
-
-  function handleFile(slot: QrSlot, e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const data = ev.target?.result as string
-      saveQrs({ ...qrs, [slot]: data })
-    }
-    reader.readAsDataURL(file)
-    e.target.value = ''
-  }
 
   return (
     <div className="max-w-lg mx-auto pb-24">
@@ -75,8 +51,6 @@ export default function PublicContactoPage() {
           ) : (
             <p className="text-xs text-gray-400 text-center py-4">QR aún no disponible</p>
           )}
-          <input ref={appRef} type="file" accept="image/*" className="hidden"
-            onChange={e => handleFile('app', e)} />
         </div>
 
         <div className="card p-5">
@@ -93,8 +67,6 @@ export default function PublicContactoPage() {
           ) : (
             <p className="text-xs text-gray-400 text-center py-4">QR aún no disponible</p>
           )}
-          <input ref={waRef} type="file" accept="image/*" className="hidden"
-            onChange={e => handleFile('whatsapp', e)} />
         </div>
 
         <div className="card p-5">

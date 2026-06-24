@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Modal from '@/components/Modal'
-import { productosStore } from '@/lib/store'
+import AdminGate from '@/components/AdminGate'
+import { getProductos, upsertProducto, deleteProducto } from '@/lib/publicApi'
 import type { PublicProducto } from '@/types'
 
 const emptyForm = {
@@ -11,42 +12,64 @@ const emptyForm = {
   highlight: true,
 }
 
-export default function PublicarProductosPage() {
+function PublicarProductosInner() {
   const [items, setItems] = useState<PublicProducto[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<PublicProducto | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [imageFile, setImageFile] = useState<File | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [fileError, setFileError] = useState('')
+  const [saving, setSaving] = useState(false)
   const imgRef = useRef<HTMLInputElement>(null)
 
-  function load() {
-    setItems(productosStore.getAll().sort((a, b) => b.created_at.localeCompare(a.created_at)))
+  async function load() {
+    const list = await getProductos()
+    setItems(list.sort((a, b) => b.created_at.localeCompare(a.created_at)))
   }
   useEffect(() => { load() }, [])
 
-  function openAdd() { setEditing(null); setForm(emptyForm); setFileError(''); setModalOpen(true) }
+  function openAdd() { setEditing(null); setForm(emptyForm); setImageFile(null); setFileError(''); setModalOpen(true) }
   function openEdit(p: PublicProducto) {
     setEditing(p)
     setForm({ name: p.name, description: p.description, price: p.price, image: p.image, category: p.category, highlight: p.highlight })
+    setImageFile(null)
     setFileError(''); setModalOpen(true)
   }
 
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
     if (!f) return
-    if (f.size > 2 * 1024 * 1024) { setFileError('Imagen muy grande (máx 2MB)'); return }
+    if (f.size > 6 * 1024 * 1024) { setFileError('Imagen muy grande (máx 6MB)'); return }
+    setImageFile(f)
     const r = new FileReader()
     r.onload = ev => setForm(fr => ({ ...fr, image: ev.target?.result as string }))
     r.readAsDataURL(f)
     e.target.value = ''
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    if (editing) productosStore.update(editing.id, form)
-    else productosStore.add(form)
-    load(); setModalOpen(false)
+    setSaving(true)
+    try {
+      const base = editing
+        ? { ...editing }
+        : { id: crypto.randomUUID(), created_at: new Date().toISOString() } as PublicProducto
+      const row: PublicProducto = {
+        ...base,
+        name: form.name, description: form.description, price: form.price,
+        category: form.category, highlight: form.highlight,
+        // si hay archivo nuevo, la Edge Function reemplaza image con la URL Storage
+        image: imageFile ? '' : form.image,
+      }
+      await upsertProducto(row, imageFile || undefined)
+      await load()
+      setModalOpen(false)
+    } catch (err) {
+      setFileError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -127,7 +150,7 @@ export default function PublicarProductosPage() {
             {form.image ? (
               <div className="rounded-xl bg-gray-50 p-2 flex items-center gap-3">
                 <img src={form.image} alt="" className="w-14 h-14 rounded-lg object-cover" />
-                <button type="button" onClick={() => setForm(f => ({ ...f, image: '' }))}
+                <button type="button" onClick={() => { setForm(f => ({ ...f, image: '' })); setImageFile(null) }}
                   className="text-xs text-red-500 font-medium">Quitar</button>
               </div>
             ) : (
@@ -144,8 +167,8 @@ export default function PublicarProductosPage() {
               className="w-4 h-4 accent-jafra" />
             <span className="text-xs font-semibold text-jafra-dark">Marcar como NUEVO</span>
           </label>
-          <button type="submit" className="w-full py-3 bg-jafra text-white rounded-xl font-semibold text-sm">
-            {editing ? 'Guardar' : 'Agregar producto'}
+          <button type="submit" disabled={saving} className="w-full py-3 bg-jafra text-white rounded-xl font-semibold text-sm disabled:opacity-60">
+            {saving ? 'Guardando…' : editing ? 'Guardar' : 'Agregar producto'}
           </button>
         </form>
       </Modal>
@@ -154,10 +177,18 @@ export default function PublicarProductosPage() {
         <p className="text-gray-600 text-sm mb-4">¿Eliminar este producto?</p>
         <div className="flex gap-3">
           <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-sm font-medium text-gray-600">Cancelar</button>
-          <button onClick={() => { if (deleteId) { productosStore.delete(deleteId); load(); setDeleteId(null) } }}
+          <button onClick={async () => { if (deleteId) { try { await deleteProducto(deleteId); await load() } catch (err) { alert('Error: ' + (err instanceof Error ? err.message : String(err))) } setDeleteId(null) } }}
             className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-medium">Eliminar</button>
         </div>
       </Modal>
     </div>
+  )
+}
+
+export default function PublicarProductosPage() {
+  return (
+    <AdminGate>
+      <PublicarProductosInner />
+    </AdminGate>
   )
 }

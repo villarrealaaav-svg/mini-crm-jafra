@@ -2,27 +2,25 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { muroRankingStore, productosStore, cursosStore } from '@/lib/store'
+import AdminGate from '@/components/AdminGate'
+import { getMuro, getProductos, getCursos, getCatalogo } from '@/lib/publicApi'
 
-interface CatalogoItem { id: string; public: boolean }
-
-export default function PublicarPage() {
+function PublicarInner() {
   const [counts, setCounts] = useState({ muro: 0, productos: 0, cursos: 0, catalogos: 0 })
   const [copied, setCopied] = useState(false)
   const [shareUrl, setShareUrl] = useState('')
 
   useEffect(() => {
-    setCounts({
-      muro: muroRankingStore.get()?.entries.length || 0,
-      productos: productosStore.getAll().length,
-      cursos: cursosStore.getAll().length,
-      catalogos: (() => {
-        try {
-          const arr: CatalogoItem[] = JSON.parse(localStorage.getItem('jafra_catalogo') || '[]')
-          return arr.filter(i => i.public).length
-        } catch { return 0 }
-      })(),
-    })
+    Promise.all([getMuro(), getProductos(), getCursos(), getCatalogo()])
+      .then(([muro, productos, cursos, catalogo]) => {
+        setCounts({
+          muro: muro?.entries.length || 0,
+          productos: productos.length,
+          cursos: cursos.length,
+          catalogos: catalogo.filter(i => i.public).length,
+        })
+      })
+      .catch(() => {})
     if (typeof window !== 'undefined') {
       setShareUrl(`${window.location.origin}/p`)
     }
@@ -114,5 +112,13 @@ export default function PublicarPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function PublicarPage() {
+  return (
+    <AdminGate>
+      <PublicarInner />
+    </AdminGate>
   )
 }

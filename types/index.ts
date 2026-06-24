@@ -93,6 +93,21 @@ export interface PublicCurso {
   modality: 'zoom' | 'presencial' | 'híbrido'
   location: string       // dirección o link zoom
   description: string
-  image: string          // base64 dataURL u URL, opcional
+  image: string          // URL Storage (antes base64), opcional
   created_at: string
+}
+
+export interface CatalogoItem {
+  id: string
+  title: string
+  type: 'link' | 'imagen' | 'pdf' | 'texto'
+  content: string        // URL Storage, URL externa, o texto
+  public: boolean        // true = visible en /p/catalogos
+  created_at: string
+}
+
+export type QrSlot = 'app' | 'whatsapp'
+export interface ContactoQR {
+  app?: string | null
+  whatsapp?: string | null
 }

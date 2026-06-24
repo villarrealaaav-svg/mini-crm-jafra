@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import Modal from '@/components/Modal'
-import { cursosStore } from '@/lib/store'
+import AdminGate from '@/components/AdminGate'
+import { getCursos, upsertCurso, deleteCurso } from '@/lib/publicApi'
 import type { PublicCurso } from '@/types'
 
 const modalityOpts: PublicCurso['modality'][] = ['zoom', 'presencial', 'híbrido']
@@ -14,42 +15,63 @@ const emptyForm = {
   location: '', description: '', image: '',
 }
 
-export default function PublicarCursosPage() {
+function PublicarCursosInner() {
   const [items, setItems] = useState<PublicCurso[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<PublicCurso | null>(null)
   const [form, setForm] = useState(emptyForm)
+  const [imageFile, setImageFile] = useState<File | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [fileError, setFileError] = useState('')
+  const [saving, setSaving] = useState(false)
   const imgRef = useRef<HTMLInputElement>(null)
 
-  function load() {
-    setItems(cursosStore.getAll().sort((a, b) => a.date.localeCompare(b.date)))
+  async function load() {
+    const list = await getCursos()
+    setItems(list.sort((a, b) => a.date.localeCompare(b.date)))
   }
   useEffect(() => { load() }, [])
 
-  function openAdd() { setEditing(null); setForm(emptyForm); setFileError(''); setModalOpen(true) }
+  function openAdd() { setEditing(null); setForm(emptyForm); setImageFile(null); setFileError(''); setModalOpen(true) }
   function openEdit(c: PublicCurso) {
     setEditing(c)
     setForm({ title: c.title, date: c.date, time: c.time, modality: c.modality, location: c.location, description: c.description, image: c.image })
+    setImageFile(null)
     setFileError(''); setModalOpen(true)
   }
 
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
     if (!f) return
-    if (f.size > 2 * 1024 * 1024) { setFileError('Imagen muy grande (máx 2MB)'); return }
+    if (f.size > 6 * 1024 * 1024) { setFileError('Imagen muy grande (máx 6MB)'); return }
+    setImageFile(f)
     const r = new FileReader()
     r.onload = ev => setForm(fr => ({ ...fr, image: ev.target?.result as string }))
     r.readAsDataURL(f)
     e.target.value = ''
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    if (editing) cursosStore.update(editing.id, form)
-    else cursosStore.add(form)
-    load(); setModalOpen(false)
+    setSaving(true)
+    try {
+      const base = editing
+        ? { ...editing }
+        : { id: crypto.randomUUID(), created_at: new Date().toISOString() } as PublicCurso
+      const row: PublicCurso = {
+        ...base,
+        title: form.title, date: form.date, time: form.time,
+        modality: form.modality, location: form.location, description: form.description,
+        image: imageFile ? '' : form.image,
+      }
+      await upsertCurso(row, imageFile || undefined)
+      await load()
+      setModalOpen(false)
+    } catch (err) {
+      setFileError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setSaving(false)
+    }
   }
 
   function formatDate(d: string) {
@@ -141,7 +163,7 @@ export default function PublicarCursosPage() {
             {form.image ? (
               <div className="rounded-xl bg-gray-50 p-2 flex items-center gap-3">
                 <img src={form.image} alt="" className="w-14 h-14 rounded-lg object-cover" />
-                <button type="button" onClick={() => setForm(f => ({ ...f, image: '' }))}
+                <button type="button" onClick={() => { setForm(f => ({ ...f, image: '' })); setImageFile(null) }}
                   className="text-xs text-red-500 font-medium">Quitar</button>
               </div>
             ) : (
@@ -152,8 +174,8 @@ export default function PublicarCursosPage() {
             )}
             {fileError && <p className="text-xs text-red-500 mt-1">{fileError}</p>}
           </div>
-          <button type="submit" className="w-full py-3 bg-jafra text-white rounded-xl font-semibold text-sm">
-            {editing ? 'Guardar' : 'Agregar curso'}
+          <button type="submit" disabled={saving} className="w-full py-3 bg-jafra text-white rounded-xl font-semibold text-sm disabled:opacity-60">
+            {saving ? 'Guardando…' : editing ? 'Guardar' : 'Agregar curso'}
           </button>
         </form>
       </Modal>
@@ -162,10 +184,18 @@ export default function PublicarCursosPage() {
         <p className="text-gray-600 text-sm mb-4">¿Eliminar este curso?</p>
         <div className="flex gap-3">
           <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-sm font-medium text-gray-600">Cancelar</button>
-          <button onClick={() => { if (deleteId) { cursosStore.delete(deleteId); load(); setDeleteId(null) } }}
+          <button onClick={async () => { if (deleteId) { try { await deleteCurso(deleteId); await load() } catch (err) { alert('Error: ' + (err instanceof Error ? err.message : String(err))) } setDeleteId(null) } }}
             className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-medium">Eliminar</button>
         </div>
       </Modal>
     </div>
+  )
+}
+
+export default function PublicarCursosPage() {
+  return (
+    <AdminGate>
+      <PublicarCursosInner />
+    </AdminGate>
   )
 }

@@ -1,11 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-
-const QR_KEY = 'jafra_qr_images'
-
-type QrSlot = 'app' | 'whatsapp'
-type QrStore = Partial<Record<QrSlot, string>>
+import AdminGate from '@/components/AdminGate'
+import { getContactoQR, setContactoQR, removeContactoQR } from '@/lib/publicApi'
+import type { ContactoQR, QrSlot } from '@/types'
 
 const sitios = [
   { label: 'JAFRA',           url: 'https://www.jafra.com.mx' },
@@ -13,39 +11,43 @@ const sitios = [
   { label: 'Mi Programa JAFRA', url: 'https://www.miprogramajafra.com' },
 ]
 
-export default function ContactoPage() {
-  const [qrs, setQrs] = useState<QrStore>({})
+function ContactoInner() {
+  const [qrs, setQrs] = useState<ContactoQR>({})
   const [zoom, setZoom] = useState<string | null>(null)
+  const [busy, setBusy] = useState<QrSlot | null>(null)
   const appRef = useRef<HTMLInputElement>(null)
   const waRef  = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const raw = localStorage.getItem(QR_KEY)
-    if (raw) try { setQrs(JSON.parse(raw)) } catch {}
+    getContactoQR().then(setQrs).catch(() => setQrs({}))
   }, [])
 
-  function saveQrs(next: QrStore) {
-    setQrs(next)
-    localStorage.setItem(QR_KEY, JSON.stringify(next))
-  }
-
-  function handleFile(slot: QrSlot, e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFile(slot: QrSlot, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const data = ev.target?.result as string
-      saveQrs({ ...qrs, [slot]: data })
-    }
-    reader.readAsDataURL(file)
     e.target.value = ''
+    if (!file) return
+    if (file.size > 6 * 1024 * 1024) { alert('Imagen muy grande (máx 6MB)'); return }
+    setBusy(slot)
+    try {
+      await setContactoQR(slot, file)
+      setQrs(await getContactoQR())
+    } catch (err) {
+      alert('Error: ' + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      setBusy(null)
+    }
   }
 
-  function removeQr(slot: QrSlot) {
-    const next = { ...qrs }
-    delete next[slot]
-    saveQrs(next)
+  async function removeQr(slot: QrSlot) {
+    setBusy(slot)
+    try {
+      await removeContactoQR(slot)
+      setQrs(await getContactoQR())
+    } catch (err) {
+      alert('Error: ' + (err instanceof Error ? err.message : String(err)))
+    } finally {
+      setBusy(null)
+    }
   }
 
   return (
@@ -137,8 +139,16 @@ export default function ContactoPage() {
   )
 }
 
+export default function ContactoPage() {
+  return (
+    <AdminGate>
+      <ContactoInner />
+    </AdminGate>
+  )
+}
+
 function QrBlock({ data, onPick, onZoom, onDelete, label }: {
-  data?: string
+  data?: string | null
   onPick: () => void
   onZoom: () => void
   onDelete: () => void

@@ -1,17 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { productosStore } from '@/lib/store'
+import { getProductos } from '@/lib/publicApi'
 import type { PublicProducto } from '@/types'
 
 export default function PublicProductosPage() {
   const [items, setItems] = useState<PublicProducto[]>([])
 
   useEffect(() => {
-    setItems(productosStore.getAll().sort((a, b) => {
-      if (a.highlight !== b.highlight) return a.highlight ? -1 : 1
-      return b.created_at.localeCompare(a.created_at)
-    }))
+    getProductos().then(list => {
+      setItems(list.sort((a, b) => {
+        if (a.highlight !== b.highlight) return a.highlight ? -1 : 1
+        return b.created_at.localeCompare(a.created_at)
+      }))
+    }).catch(() => setItems([]))
   }, [])
 
   const categories = Array.from(new Set(items.map(i => i.category).filter(Boolean)))

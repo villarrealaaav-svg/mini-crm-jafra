@@ -2,43 +2,31 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Modal from '@/components/Modal'
-
-interface CatalogoItem {
-  id: string
-  title: string
-  type: 'link' | 'imagen' | 'pdf' | 'texto'
-  content: string  // URL, base64 data URL, o texto
-  public: boolean  // true = visible en /p/catalogos
-  created_at: string
-}
+import AdminGate from '@/components/AdminGate'
+import { getCatalogo, upsertCatalogo, deleteCatalogo, toggleCatalogoPublic } from '@/lib/publicApi'
+import type { CatalogoItem } from '@/types'
 
 const typeEmoji: Record<CatalogoItem['type'], string> = {
   link: '🔗', imagen: '🖼️', pdf: '📄', texto: '📝',
 }
 
-const KEY = 'jafra_catalogo'
-
-function getItems(): CatalogoItem[] {
-  if (typeof window === 'undefined') return []
-  try { return JSON.parse(localStorage.getItem(KEY) || '[]') } catch { return [] }
-}
-
-function saveItems(items: CatalogoItem[]) {
-  localStorage.setItem(KEY, JSON.stringify(items))
-}
-
 const emptyForm = { title: '', type: 'pdf' as CatalogoItem['type'], content: '', public: false }
 
-export default function CatalogoPage() {
+function CatalogoInner() {
   const [items, setItems] = useState<CatalogoItem[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [catFile, setCatFile] = useState<File | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [viewing, setViewing] = useState<CatalogoItem | null>(null)
   const [fileError, setFileError] = useState<string>('')
+  const [saving, setSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  function load() { setItems(getItems()) }
+  async function load() {
+    const list = await getCatalogo()
+    setItems(list.sort((a, b) => b.created_at.localeCompare(a.created_at)))
+  }
   useEffect(() => { load() }, [])
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -58,50 +46,71 @@ export default function CatalogoPage() {
       return
     }
 
-    // Límite ~4MB (localStorage tiene ~5MB total)
-    if (file.size > 4 * 1024 * 1024) {
-      setFileError(`Archivo muy grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máx 4MB.`)
+    // Límite 10MB (ahora va a Storage, no a localStorage)
+    if (file.size > 10 * 1024 * 1024) {
+      setFileError(`Archivo muy grande (${(file.size / 1024 / 1024).toFixed(1)}MB). Máx 10MB.`)
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const data = ev.target?.result as string
-      setForm(f => ({ ...f, content: data, title: f.title || file.name.replace(/\.[^.]+$/, '') }))
-    }
-    reader.readAsDataURL(file)
+    setCatFile(file)
+    // preview ligero (no se guarda; solo para mostrar "cargado")
+    setForm(f => ({ ...f, content: `data:placeholder`, title: f.title || file.name.replace(/\.[^.]+$/, '') }))
     e.target.value = ''
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.content) {
-      setFileError(form.type === 'pdf' || form.type === 'imagen' ? 'Sube un archivo o pega una URL' : 'Ingresa contenido')
+    const isFileType = form.type === 'pdf' || form.type === 'imagen'
+    if (isFileType && !catFile && !form.content.startsWith('http')) {
+      setFileError('Sube un archivo o pega una URL')
       return
     }
+    if (!isFileType && !form.content) {
+      setFileError('Ingresa contenido')
+      return
+    }
+    setSaving(true)
     try {
-      const all = getItems()
-      const newItem: CatalogoItem = { ...form, id: crypto.randomUUID(), created_at: new Date().toISOString() }
-      saveItems([...all, newItem])
-      load()
+      const row: CatalogoItem = {
+        id: crypto.randomUUID(),
+        created_at: new Date().toISOString(),
+        title: form.title,
+        type: form.type,
+        public: form.public,
+        // con archivo, la Edge Function reemplaza content con la URL Storage
+        content: catFile ? '' : form.content,
+      }
+      await upsertCatalogo(row, catFile || undefined)
+      await load()
       setModalOpen(false)
       setForm(emptyForm)
+      setCatFile(null)
       setFileError('')
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      setFileError(`Error guardando: ${msg}. Archivo posiblemente muy grande.`)
+      setFileError(`Error guardando: ${msg}`)
+    } finally {
+      setSaving(false)
     }
   }
 
-  function handleDelete(id: string) {
-    saveItems(getItems().filter(i => i.id !== id))
-    load()
+  async function handleDelete(id: string) {
+    try {
+      await deleteCatalogo(id)
+      await load()
+    } catch (err) {
+      alert('Error: ' + (err instanceof Error ? err.message : String(err)))
+    }
     setDeleteId(null)
   }
 
-  function togglePublic(id: string) {
-    saveItems(getItems().map(i => i.id === id ? { ...i, public: !i.public } : i))
-    load()
+  async function togglePublic(id: string, current: boolean) {
+    try {
+      await toggleCatalogoPublic(id, !current)
+      await load()
+    } catch (err) {
+      alert('Error: ' + (err instanceof Error ? err.message : String(err)))
+    }
   }
 
   function openItem(item: CatalogoItem) {
@@ -116,7 +125,7 @@ export default function CatalogoPage() {
 
   const acceptForType = form.type === 'imagen' ? 'image/*' : form.type === 'pdf' ? 'application/pdf' : ''
   const isFileType = form.type === 'imagen' || form.type === 'pdf'
-  const hasUploadedFile = isFileType && form.content.startsWith('data:')
+  const hasUploadedFile = isFileType && !!catFile
 
   return (
     <div className="max-w-lg mx-auto pb-24">
@@ -126,7 +135,7 @@ export default function CatalogoPage() {
             <h1 className="text-[22px] font-bold text-gray-900">Catálogo</h1>
             <p className="text-[11px] text-gray-400 mt-0.5">{items.length} item{items.length !== 1 ? 's' : ''}</p>
           </div>
-          <button onClick={() => { setForm(emptyForm); setFileError(''); setModalOpen(true) }}
+          <button onClick={() => { setForm(emptyForm); setCatFile(null); setFileError(''); setModalOpen(true) }}
             className="w-9 h-9 rounded-full bg-jafra text-white flex items-center justify-center text-xl shadow-sm active:scale-95 transition-transform">+</button>
         </div>
       </div>
@@ -152,10 +161,10 @@ export default function CatalogoPage() {
                   )}
                 </div>
                 <p className="text-xs text-gray-400 truncate">
-                  {item.content.startsWith('data:') ? `Archivo ${item.type}` : item.content}
+                  {item.type === 'pdf' || item.type === 'imagen' ? `Archivo ${item.type}` : item.content}
                 </p>
               </div>
-              <button onClick={e => { e.stopPropagation(); togglePublic(item.id) }}
+              <button onClick={e => { e.stopPropagation(); togglePublic(item.id, item.public) }}
                 title={item.public ? 'Quitar de público' : 'Hacer público'}
                 className={`w-8 h-8 flex items-center justify-center rounded-full text-sm ${item.public ? 'bg-jafra-light' : 'bg-gray-50'}`}>
                 {item.public ? '🌐' : '🔒'}
@@ -200,11 +209,11 @@ export default function CatalogoPage() {
               {hasUploadedFile ? (
                 <div className="rounded-xl bg-green-50 border border-green-200 p-3 flex items-center gap-3">
                   <span className="text-xl">{typeEmoji[form.type]}</span>
-                  <div className="flex-1 text-xs">
-                    <p className="font-semibold text-green-700">Archivo cargado ({(form.content.length / 1024).toFixed(0)} KB)</p>
+                  <div className="flex-1 text-xs min-w-0">
+                    <p className="font-semibold text-green-700 truncate">{catFile?.name} ({((catFile?.size || 0) / 1024).toFixed(0)} KB)</p>
                     <p className="text-green-600">Listo para guardar</p>
                   </div>
-                  <button type="button" onClick={() => { setForm(f => ({ ...f, content: '' })); setFileError('') }}
+                  <button type="button" onClick={() => { setCatFile(null); setForm(f => ({ ...f, content: '' })); setFileError('') }}
                     className="text-red-500 text-xs font-medium">Quitar</button>
                 </div>
               ) : (
@@ -254,8 +263,8 @@ export default function CatalogoPage() {
               <p className="text-[10px] text-gray-500">Visible para consultoras/clientes con el link público</p>
             </div>
           </label>
-          <button type="submit" className="w-full py-3 bg-jafra text-white rounded-xl font-semibold text-sm">
-            Agregar al catálogo
+          <button type="submit" disabled={saving} className="w-full py-3 bg-jafra text-white rounded-xl font-semibold text-sm disabled:opacity-60">
+            {saving ? 'Guardando…' : 'Agregar al catálogo'}
           </button>
         </form>
       </Modal>
@@ -303,5 +312,13 @@ export default function CatalogoPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function CatalogoPage() {
+  return (
+    <AdminGate>
+      <CatalogoInner />
+    </AdminGate>
   )
 }

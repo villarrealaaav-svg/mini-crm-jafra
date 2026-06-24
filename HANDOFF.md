@@ -6,7 +6,7 @@
 **Repo:** `https://github.com/villarrealaaav-svg/mini-crm-jafra` (privado)
 **Deploy producción:** `https://mini-crm-jafra.vercel.app`
 **Cuenta Vercel:** villarrealaaav-svg (Hobby tier)
-**Ruta local:** `D:\Claude Code\EXPERIMENTOS\Sandbox\MINI CRM JAFRA\mini-crm`
+**Ruta local:** `D:\AI_WORKSPACE\EXPERIMENTOS\Sandbox\MINI CRM JAFRA\mini-crm`
 
 ---
 
@@ -265,7 +265,7 @@ Todos en `lib/store.ts`:
 ### Cómo correr el proyecto
 
 ```bash
-cd "D:\Claude Code\EXPERIMENTOS\Sandbox\MINI CRM JAFRA\mini-crm"
+cd "D:\AI_WORKSPACE\EXPERIMENTOS\Sandbox\MINI CRM JAFRA\mini-crm"
 npm install          # primera vez
 npm run dev          # localhost:3000 (puede pedir otro puerto si 3000 ocupado)
 npm run build        # production build con Turbopack
@@ -569,7 +569,7 @@ Los reminders aparecen en `/dashboard/recordatorios` con badge `auto`. NO se pue
 
 ### Prompt sugerido para arrancar nueva sesión
 
-> Tengo un proyecto en `D:\Claude Code\EXPERIMENTOS\Sandbox\MINI CRM JAFRA\mini-crm`. Lee primero `HANDOFF.md` completo, después `AGENTS.md`. Es un CRM JAFRA mobile-first deployado en Vercel, Next.js 16, Tailwind v4, sin backend. Quiero avanzar con [tarea específica]. Pregúntame si algo no está claro antes de tocar código. NO toques el diseño del Muro del Éxito (`app/p/muro/page.tsx`), está fijo por requerimiento de la líder. Usa modo caveman para responder.
+> Tengo un proyecto en `D:\AI_WORKSPACE\EXPERIMENTOS\Sandbox\MINI CRM JAFRA\mini-crm`. Lee primero `HANDOFF.md` completo, después `AGENTS.md`. Es un CRM JAFRA mobile-first deployado en Vercel, Next.js 16, Tailwind v4, sin backend. Quiero avanzar con [tarea específica]. Pregúntame si algo no está claro antes de tocar código. NO toques el diseño del Muro del Éxito (`app/p/muro/page.tsx`), está fijo por requerimiento de la líder. Usa modo caveman para responder.
 
 ---
 
